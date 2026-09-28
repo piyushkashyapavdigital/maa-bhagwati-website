@@ -36,10 +36,10 @@
       "slug": "roli",
       "categoryId": "cat-1",
       "image": "https://cdldqqsrfxopidgalrlf.supabase.co/storage/v1/object/public/Images/uploads/1790583866916-za8qe7.png",
-      "price": 40,
+      "price": 50,
       "unit": "1 pack",
       "referenceQuantity": "1 pack",
-      "stock": 100,
+      "stock": 10,
       "isActive": true
     },
     {

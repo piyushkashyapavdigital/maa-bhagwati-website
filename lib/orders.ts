@@ -1,5 +1,8 @@
-import fs from "fs";
-import path from "path";
+import {
+  readOrders as supabaseReadOrders,
+  updateOrderStatus as supabaseUpdateOrderStatus,
+  createOrder,
+} from "@/lib/db";
 
 export interface OrderItem {
   id: string;
@@ -37,24 +40,22 @@ export interface Order {
   total: number;
 }
 
-const DATA_DIR = path.join(process.cwd(), "data");
-const ORDERS_FILE = path.join(DATA_DIR, "orders.json");
-
-function ensureFile(): void {
-  if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
-  if (!fs.existsSync(ORDERS_FILE)) fs.writeFileSync(ORDERS_FILE, "[]", "utf8");
+export { createOrder };
+export async function readOrders(): Promise<Order[]> {
+  const orders = await supabaseReadOrders();
+  return orders as Order[];
 }
 
-export function readOrders(): Order[] {
-  ensureFile();
+export async function writeOrders(order: Order): Promise<Order> {
+  const result = await createOrder(order);
+  return result as Order;
+}
+
+export async function updateOrder(orderId: string, status: OrderStatus): Promise<Order | undefined> {
   try {
-    return JSON.parse(fs.readFileSync(ORDERS_FILE, "utf8")) as Order[];
+    const result = await supabaseUpdateOrderStatus(orderId, status);
+    return result as Order | undefined;
   } catch {
-    return [];
+    return undefined;
   }
-}
-
-export function writeOrders(orders: Order[]): void {
-  ensureFile();
-  fs.writeFileSync(ORDERS_FILE, JSON.stringify(orders, null, 2), "utf8");
 }

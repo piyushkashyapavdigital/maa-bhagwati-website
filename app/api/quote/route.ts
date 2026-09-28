@@ -6,7 +6,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const lines = Array.isArray(body?.items) ? body.items : [];
 
-    const quote = quoteCart(
+    const quote = await quoteCart(
       lines
         .filter(
           (l: unknown): l is { productId: string; quantity: number } =>

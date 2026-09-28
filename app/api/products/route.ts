@@ -5,7 +5,7 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const categoryId = searchParams.get("categoryId") ?? undefined;
 
-  const products = getProducts(categoryId);
+  const products = await getProducts(categoryId);
   return NextResponse.json({
     success: true,
     total: products.length,

@@ -27,9 +27,10 @@ export default function CartPage() {
   // Group items by category for a tidy review
   const groups = new Map<string, typeof cartItems>();
   for (const item of cartItems) {
-    const list = groups.get(item.categoryId) ?? [];
+    const catId = item.categoryId ?? "uncategorized";
+    const list = groups.get(catId) ?? [];
     list.push(item);
-    groups.set(item.categoryId, list);
+    groups.set(catId, list);
   }
 
   return (

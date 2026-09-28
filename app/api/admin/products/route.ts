@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { readDb, writeDb } from "@/lib/db";
+import { getProducts, createProduct } from "@/lib/db";
 import { requireAdmin } from "@/lib/auth";
 
 export async function GET() {
-  const db = readDb();
-  const products = db.products.filter((p) => p.isActive);
+  const products = await getProducts();
   return NextResponse.json({ success: true, total: products.length, products });
 }
 
@@ -14,11 +13,7 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json();
-    const db = readDb();
-    const id = `prod-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
-    const product = { ...body, id };
-    db.products.push(product);
-    writeDb(db);
+    const product = await createProduct(body);
     return NextResponse.json({ success: true, product }, { status: 201 });
   } catch {
     return NextResponse.json({ error: "Bad request" }, { status: 400 });

@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { readDb, writeDb } from "@/lib/db";
+import { getCategories, createCategory } from "@/lib/db";
 import { requireAdmin } from "@/lib/auth";
 
 export async function GET() {
-  const db = readDb();
-  const categories = db.categories.filter((c) => c.isActive).sort((a, b) => a.sortOrder - b.sortOrder);
+  const categories = await getCategories();
   return NextResponse.json({ success: true, categories });
 }
 
@@ -14,11 +13,7 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json();
-    const db = readDb();
-    const id = `cat-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
-    const category = { ...body, id };
-    db.categories.push(category);
-    writeDb(db);
+    const category = await createCategory(body);
     return NextResponse.json({ success: true, category }, { status: 201 });
   } catch {
     return NextResponse.json({ error: "Bad request" }, { status: 400 });

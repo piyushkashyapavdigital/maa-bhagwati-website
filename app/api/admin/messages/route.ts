@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { readMessages } from "@/lib/data";
+import { readMessages } from "@/lib/db";
 
 export async function GET() {
-  const messages = readMessages().sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  const messages = await readMessages();
   return NextResponse.json({ success: true, total: messages.length, messages });
 }

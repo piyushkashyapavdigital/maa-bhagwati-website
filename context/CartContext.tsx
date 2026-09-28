@@ -19,7 +19,7 @@ export interface CartItem {
   unit: string;
   emoji: string;
   image: string | null;
-  categoryId: string;
+  categoryId: string | undefined;
 }
 
 interface CartContextType {

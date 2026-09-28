@@ -66,7 +66,7 @@ export function resolveImage(path?: string | null): string | undefined {
   if (!path) return undefined;
   if (/^https?:\/\//i.test(path)) return path;
   if (path.startsWith('/images/uploads/')) {
-    return `${apiBase}/uploads/${path.slice('/images/uploads/'.length)}`;
+    return `${apiBase}/api/upload/${path.slice('/images/uploads/'.length)}`;
   }
   if (path.startsWith('/')) return `${siteBase}${path}`;
   return path;
