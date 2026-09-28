@@ -1,0 +1,59 @@
+{
+  "categories": [
+    {
+      "id": "cat-1",
+      "name": "Mukhya Pooja Samagri",
+      "slug": "mukhya-pooja-samagri",
+      "sortOrder": 1,
+      "isActive": true
+    },
+    {
+      "id": "cat-2",
+      "name": "Havan Samagri",
+      "slug": "havan-samagri",
+      "sortOrder": 2,
+      "isActive": true
+    }
+  ],
+  "products": [
+    {
+      "id": "prod-1",
+      "name": "Roli",
+      "slug": "roli",
+      "categoryId": "cat-1",
+      "image": null,
+      "emoji": "🔴",
+      "price": 30,
+      "unit": "1 packet",
+      "referenceQuantity": "1 packet",
+      "stock": 100,
+      "isActive": true
+    },
+    {
+      "id": "prod-2",
+      "name": "Jau",
+      "slug": "jau",
+      "categoryId": "cat-2",
+      "image": null,
+      "emoji": "🌾",
+      "price": 49,
+      "unit": "250 gram",
+      "referenceQuantity": "250 gram",
+      "stock": 3,
+      "isActive": true
+    },
+    {
+      "id": "prod-3",
+      "name": "Loban",
+      "slug": "loban",
+      "categoryId": "cat-2",
+      "image": null,
+      "emoji": "🟡",
+      "price": 55,
+      "unit": "50 gram",
+      "referenceQuantity": "50 gram",
+      "stock": 100,
+      "isActive": false
+    }
+  ]
+}

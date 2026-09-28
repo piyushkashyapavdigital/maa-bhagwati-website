@@ -1,0 +1,281 @@
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import React, { useCallback, useEffect, useState } from 'react';
+import {
+  FlatList,
+  Image,
+  Modal,
+  Pressable,
+  RefreshControl,
+  Switch,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
+import * as ImagePicker from 'react-native-image-picker';
+import { api, resolveImage, type ImageFile } from '../api';
+import { ConfirmDialog } from '../components/ConfirmDialog';
+import { EmptyState } from '../components/EmptyState';
+import { ErrorBanner } from '../components/ErrorBanner';
+import { GradientHeader } from '../components/GradientHeader';
+import { LoadingView } from '../components/LoadingView';
+import { PrimaryButton } from '../components/PrimaryButton';
+import { Screen } from '../components/Screen';
+import { ZoomableImage } from '../components/ZoomableImage';
+import type { RootStackParamList } from '../navigation/types';
+import { colors, formatDate } from '../theme';
+import type { DBBanner } from '../types';
+
+export function BannersScreen() {
+  const nav = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const [banners, setBanners] = useState<DBBanner[]>([]);
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [newImage, setNewImage] = useState<string | null>(null);
+  const [newTitle, setNewTitle] = useState('');
+  const [newLink, setNewLink] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState<DBBanner | null>(null);
+
+  const load = useCallback(async () => {
+    setError('');
+    try {
+      const res = await api.get<{ banners: DBBanner[] }>('/api/admin/banners');
+      setBanners(res.banners);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to load');
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    const unsub = nav.addListener('focus', load);
+    return unsub;
+  }, [nav, load]);
+
+  const pickImage = async () => {
+    const res = await ImagePicker.launchImageLibrary({
+      mediaType: 'photo',
+      quality: 0.8,
+      maxWidth: 1600,
+      maxHeight: 900,
+    });
+    const asset = res.assets?.[0];
+    if (res.didCancel || !asset?.uri) return;
+    setUploading(true);
+    setError('');
+    try {
+      const file: ImageFile = {
+        uri: asset.uri,
+        name: asset.fileName ?? `banner-${Date.now()}.jpg`,
+        type: asset.type ?? 'image/jpeg',
+      };
+      const up = await api.upload<{ path: string }>('/api/admin/upload', file);
+      setNewImage(up.path);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Upload failed');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const createBanner = async () => {
+    if (!newImage) {
+      setError('Pick a banner image first');
+      return;
+    }
+    setSaving(true);
+    setError('');
+    try {
+      await api.post('/api/admin/banners', {
+        image: newImage,
+        title: newTitle.trim() || undefined,
+        link: newLink.trim() || undefined,
+      });
+      setCreating(false);
+      setNewImage(null);
+      setNewTitle('');
+      setNewLink('');
+      load();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Save failed');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const toggle = async (b: DBBanner) => {
+    try {
+      await api.put(`/api/admin/banners/${b.id}`, { isActive: !b.isActive });
+      setBanners((prev) =>
+        prev.map((x) => (x.id === b.id ? { ...x, isActive: !x.isActive } : x))
+      );
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Update failed');
+    }
+  };
+
+  const doDelete = async () => {
+    if (!confirmDelete) return;
+    setSaving(true);
+    try {
+      await api.del(`/api/admin/banners/${confirmDelete.id}`);
+      setConfirmDelete(null);
+      load();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Delete failed');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading && !banners.length) {
+    return (
+      <Screen>
+        <GradientHeader title="Banners" onBack={() => nav.goBack()} />
+        <LoadingView />
+      </Screen>
+    );
+  }
+
+  return (
+    <Screen>
+      <GradientHeader
+        title="Banners"
+        subtitle={`${banners.length} promotional strips`}
+        onBack={() => nav.goBack()}
+        right={
+          <Pressable
+            onPress={() => setCreating(true)}
+            className="h-10 w-10 items-center justify-center rounded-full bg-gold"
+            accessibilityLabel="Add banner"
+          >
+            <Text className="text-xl font-black text-maroon">＋</Text>
+          </Pressable>
+        }
+      />
+      <ErrorBanner message={error} onRetry={load} />
+
+      <FlatList
+        data={banners}
+        keyExtractor={(b) => b.id}
+        contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={() => {
+              setRefreshing(true);
+              load();
+            }}
+            tintColor={colors.maroon}
+          />
+        }
+        ListEmptyComponent={
+          <EmptyState
+            title="No banners yet"
+            message="Upload a wide image (2017×780 looks great) to promote sales on the homepage."
+            actionTitle="Add banner"
+            onAction={() => setCreating(true)}
+          />
+        }
+        renderItem={({ item }) => (
+          <View className="mb-4 overflow-hidden rounded-2xl border border-line bg-white shadow-sm">
+            <Image
+              source={{ uri: resolveImage(item.image) }}
+              style={{ width: '100%', height: 120 }}
+              resizeMode="cover"
+            />
+            <View className="flex-row items-center p-4">
+              <View className="flex-1">
+                <Text className="text-sm font-extrabold text-ink">
+                  {item.title || 'Untitled banner'}
+                </Text>
+                <Text className="text-xs text-muted">
+                  {item.link || 'No link'} · added {formatDate(item.createdAt)}
+                </Text>
+              </View>
+              <Switch
+                value={item.isActive}
+                onValueChange={() => toggle(item)}
+                trackColor={{ false: '#EADDCB', true: `${colors.leaf}66` }}
+                thumbColor={item.isActive ? colors.leaf : '#A8A29E'}
+              />
+              <Pressable onPress={() => setConfirmDelete(item)} className="ml-3" hitSlop={8}>
+                <Text className="text-lg text-ruby"></Text>
+              </Pressable>
+            </View>
+          </View>
+        )}
+      />
+
+      {/* Create dialog */}
+      <Modal visible={creating} transparent animationType="fade" onRequestClose={() => setCreating(false)}>
+        <View className="flex-1 items-center justify-center bg-black/50 px-6">
+          <View className="w-full max-w-md rounded-3xl bg-white p-6">
+            <View className="mb-1 h-1.5 w-12 rounded-full bg-gold" />
+            <Text className="mb-3 text-lg font-extrabold text-maroon">New banner</Text>
+            <Pressable
+              onPress={pickImage}
+              className="mb-4 items-center rounded-2xl border-2 border-dashed border-line bg-cream p-5"
+            >
+              {newImage ? (
+                <ZoomableImage source={{ uri: resolveImage(newImage) ?? '' }} style={{ width: '100%', height: 100 }} />
+              ) : (
+                <>
+                  <Text className="text-3xl" />
+                  <Text className="mt-2 text-sm font-bold text-maroon">
+                    {uploading ? 'Uploading' : 'Tap to choose image'}
+                  </Text>
+                </>
+              )}
+            </Pressable>
+            <TextInput
+              value={newTitle}
+              onChangeText={setNewTitle}
+              placeholder="Title (optional)"
+              placeholderTextColor="#A8A29E"
+              className="mb-3 rounded-xl border border-line px-4 py-3 text-base"
+            />
+            <TextInput
+              value={newLink}
+              onChangeText={setNewLink}
+              placeholder="Link (optional) e.g. /category/havan-samagri"
+              placeholderTextColor="#A8A29E"
+              autoCapitalize="none"
+              className="mb-4 rounded-xl border border-line px-4 py-3 text-base"
+            />
+            <View className="gap-3">
+              <PrimaryButton
+                title={saving ? 'Saving' : 'Create banner'}
+                loading={saving}
+                onPress={createBanner}
+              />
+              <PrimaryButton
+                title="Cancel"
+                variant="ghost"
+                onPress={() => setCreating(false)}
+                disabled={saving}
+              />
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      <ConfirmDialog
+        visible={confirmDelete !== null}
+        title="Delete banner?"
+        message={confirmDelete ? `"${confirmDelete.title || confirmDelete.id}" will be removed.` : ''}
+        confirmTitle="Delete"
+        destructive
+        loading={saving}
+        onConfirm={doDelete}
+        onCancel={() => setConfirmDelete(null)}
+      />
+    </Screen>
+  );
+}

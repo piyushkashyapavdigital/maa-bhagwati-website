@@ -1,0 +1,17 @@
+[
+  {
+    "id": "msg-1",
+    "name": "Sita",
+    "phone": "9111111111",
+    "message": "Need bulk havan samagri quote",
+    "createdAt": "2026-09-20T10:00:00.000Z"
+  },
+  {
+    "id": "msg-2",
+    "name": "Ram",
+    "phone": "9222222222",
+    "message": "Price list chahiye",
+    "createdAt": "2026-09-21T11:00:00.000Z",
+    "read": true
+  }
+]

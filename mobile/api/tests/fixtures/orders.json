@@ -1,0 +1,62 @@
+[
+  {
+    "id": "pay_today",
+    "rzpOrderId": "order_today",
+    "date": "{{TODAY}}",
+    "status": "Confirmed",
+    "customer": {
+      "name": "Amit Sharma",
+      "phone": "9000000001",
+      "email": "amit@example.com",
+      "address1": "12 Temple Road",
+      "address2": "",
+      "city": "Delhi",
+      "state": "Delhi",
+      "pincode": "110001"
+    },
+    "items": [{ "id": "prod-1", "name": "Roli", "price": 30, "qty": 2 }],
+    "subtotal": 60,
+    "deliveryCharge": 0,
+    "total": 60
+  },
+  {
+    "id": "pay_old",
+    "rzpOrderId": "order_old",
+    "date": "{{DAYS_AGO_3}}",
+    "status": "Confirmed",
+    "customer": {
+      "name": "Sunita Devi",
+      "phone": "9000000002",
+      "email": "",
+      "address1": "4 MG Street",
+      "address2": "",
+      "city": "Nahan",
+      "state": "Himachal Pradesh",
+      "pincode": "173001"
+    },
+    "items": [{ "id": "prod-2", "name": "Jau", "price": 49, "qty": 5 }],
+    "subtotal": 245,
+    "deliveryCharge": 70,
+    "total": 315
+  },
+  {
+    "id": "pay_failed",
+    "rzpOrderId": "order_failed",
+    "date": "{{TODAY}}",
+    "status": "Failed",
+    "customer": {
+      "name": "Amit Sharma",
+      "phone": "9000000001",
+      "email": "amit@example.com",
+      "address1": "12 Temple Road",
+      "address2": "",
+      "city": "Delhi",
+      "state": "Delhi",
+      "pincode": "110001"
+    },
+    "items": [{ "id": "prod-3", "name": "Loban", "price": 999, "qty": 1 }],
+    "subtotal": 999,
+    "deliveryCharge": 0,
+    "total": 999
+  }
+]
