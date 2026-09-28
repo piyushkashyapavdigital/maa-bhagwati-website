@@ -4,8 +4,8 @@ const K_API_URL = 'mbpb_api_url';
 const K_SITE_URL = 'mbpb_site_url';
 const K_TOKEN = 'mbpb_admin_token';
 
-export const DEFAULT_API_URL = 'http://192.168.1.34:8787';
-export const DEFAULT_SITE_URL = 'http://192.168.1.34:3000';
+export const DEFAULT_API_URL = 'https://maa-bhagwati.vercel.app';
+export const DEFAULT_SITE_URL = 'https://maa-bhagwati.vercel.app';
 
 let apiBase = DEFAULT_API_URL;
 let siteBase = DEFAULT_SITE_URL;

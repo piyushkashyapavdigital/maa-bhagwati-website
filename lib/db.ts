@@ -38,9 +38,19 @@ export interface DBProduct {
   isActive: boolean;
 }
 
+export interface DBBanner {
+  id: string;
+  image: string;
+  title?: string;
+  link?: string;
+  sortOrder: number;
+  isActive: boolean;
+}
+
 export interface DBData {
   categories: DBCategory[];
   products: DBProduct[];
+  banners: DBBanner[];
 }
 
 const DATA_DIR = path.join(process.cwd(), "data");
@@ -164,7 +174,7 @@ function seedData(): DBData {
     P(72, "Dari Ya Anya Aasan", "🧎", 199, "1 pc", 50, "cat-4"),
   ];
 
-  return { categories, products };
+  return { categories, products, banners: [] };
 }
 
 // ── File access ──────────────────────────────────────────────
@@ -180,12 +190,95 @@ export function readDb(): DBData {
   try {
     const parsed = JSON.parse(fs.readFileSync(DB_FILE, "utf8")) as DBData;
     if (!parsed.categories || !parsed.products) throw new Error("bad db shape");
+    if (!parsed.banners) parsed.banners = [];
     return parsed;
   } catch {
     const seed = seedData();
     writeDb(seed);
     return seed;
   }
+}
+
+// ── CRUD ──────────────────────────────────────────────────
+export function createProduct(data: Omit<DBProduct, "id">): DBProduct {
+  const db = readDb();
+  const id = `prod-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+  const product = { ...data, id };
+  db.products.push(product);
+  writeDb(db);
+  return product;
+}
+
+export function updateProduct(id: string, data: Partial<DBProduct>): DBProduct | undefined {
+  const db = readDb();
+  const idx = db.products.findIndex((p) => p.id === id);
+  if (idx === -1) return undefined;
+  db.products[idx] = { ...db.products[idx], ...data };
+  writeDb(db);
+  return db.products[idx];
+}
+
+export function deleteProduct(id: string): boolean {
+  const db = readDb();
+  const idx = db.products.findIndex((p) => p.id === id);
+  if (idx === -1) return false;
+  db.products.splice(idx, 1);
+  writeDb(db);
+  return true;
+}
+
+export function createCategory(data: Omit<DBCategory, "id">): DBCategory {
+  const db = readDb();
+  const id = `cat-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+  const category = { ...data, id };
+  db.categories.push(category);
+  writeDb(db);
+  return category;
+}
+
+export function updateCategory(id: string, data: Partial<DBCategory>): DBCategory | undefined {
+  const db = readDb();
+  const idx = db.categories.findIndex((c) => c.id === id);
+  if (idx === -1) return undefined;
+  db.categories[idx] = { ...db.categories[idx], ...data };
+  writeDb(db);
+  return db.categories[idx];
+}
+
+export function deleteCategory(id: string): boolean {
+  const db = readDb();
+  const idx = db.categories.findIndex((c) => c.id === id);
+  if (idx === -1) return false;
+  db.categories.splice(idx, 1);
+  writeDb(db);
+  return true;
+}
+
+export function createBanner(data: Omit<DBBanner, "id">): DBBanner {
+  const db = readDb();
+  const id = `banner-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+  const banner = { ...data, id };
+  db.banners.push(banner);
+  writeDb(db);
+  return banner;
+}
+
+export function updateBanner(id: string, data: Partial<DBBanner>): DBBanner | undefined {
+  const db = readDb();
+  const idx = db.banners.findIndex((b) => b.id === id);
+  if (idx === -1) return undefined;
+  db.banners[idx] = { ...db.banners[idx], ...data };
+  writeDb(db);
+  return db.banners[idx];
+}
+
+export function deleteBanner(id: string): boolean {
+  const db = readDb();
+  const idx = db.banners.findIndex((b) => b.id === id);
+  if (idx === -1) return false;
+  db.banners.splice(idx, 1);
+  writeDb(db);
+  return true;
 }
 
 export function writeDb(data: DBData): void {
