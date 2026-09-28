@@ -1,5 +1,60 @@
 import { supabase, BUCKET } from "./supabase";
+import dbData from "../data/db.json";
 
+// ── Load local JSON data ──────────────────────────────
+function loadDBData(): any {
+  return dbData ?? { categories: [], products: [], banners: [] };
+}
+
+// Normalize JSON data (camelCase → snake_case aliases)
+function normalizeCategory(c: any): DBCategory {
+  return {
+    id: c.id ?? "",
+    name: c.name ?? "",
+    slug: c.slug ?? "",
+    sort_order: c.sort_order ?? c.sortOrder ?? 0,
+    is_active: c.is_active ?? c.isActive ?? true,
+    sortOrder: c.sortOrder ?? c.sort_order ?? 0,
+    isActive: c.isActive ?? c.is_active ?? true,
+    coming_soon: c.coming_soon ?? c.comingSoon ?? false,
+    comingSoon: c.comingSoon ?? c.coming_soon ?? false,
+    created_at: c.created_at,
+    updated_at: c.updated_at,
+  };
+}
+
+function normalizeProduct(p: any): DBProduct {
+  return {
+    id: p.id ?? "",
+    name: p.name ?? "",
+    slug: p.slug ?? "",
+    category_id: p.category_id ?? p.categoryId ?? "",
+    categoryId: p.categoryId ?? p.category_id ?? "",
+    image: p.image ?? null,
+    price: p.price ?? 0,
+    unit: p.unit ?? "",
+    reference_quantity: p.reference_quantity ?? p.referenceQuantity ?? "",
+    referenceQuantity: p.referenceQuantity ?? p.reference_quantity ?? "",
+    stock: p.stock ?? 0,
+    is_active: p.is_active ?? p.isActive ?? true,
+    isActive: p.isActive ?? p.is_active ?? true,
+    emoji: p.emoji ?? "",
+    created_at: p.created_at,
+    updated_at: p.updated_at,
+  };
+}
+
+function normalizeBanner(b: any): DBBanner {
+  return {
+    ...b,
+    sort_order: b.sort_order ?? b.sortOrder ?? 0,
+    is_active: b.is_active ?? b.isActive ?? true,
+    sortOrder: b.sortOrder ?? b.sort_order ?? 0,
+    isActive: b.isActive ?? b.is_active ?? true,
+  };
+}
+
+// ── Interfaces ──────────────────────────────────────
 export interface DBCategory {
   id: string;
   name: string;
@@ -86,30 +141,21 @@ export interface Order {
   total: number;
 }
 
-// ── Categories ──────────────────────────────────────
+// ── Categories (from JSON) ──────────────────────────
 export async function getCategories() {
-  const { data, error } = await supabase
-    .from("categories")
-    .select("*")
-    .order("sort_order", { ascending: true });
-  if (error) return [];
-  return (data ?? []).filter((c: any) => c.is_active);
+  const data = loadDBData();
+  return (data.categories ?? []).map(normalizeCategory).filter((c: any) => c.is_active);
 }
 
 export async function getAllCategories() {
-  const { data, error } = await supabase.from("categories").select("*");
-  if (error) return [];
-  return data ?? [];
+  const data = loadDBData();
+  return (data.categories ?? []).map(normalizeCategory);
 }
 
 export async function getCategoryById(id: string) {
-  const { data, error } = await supabase
-    .from("categories")
-    .select("*")
-    .eq("id", id)
-    .single();
-  if (error) return undefined;
-  return data;
+  const data = loadDBData();
+  const cat = (data.categories ?? []).find((c: any) => c.id === id);
+  return cat ? normalizeCategory(cat) : undefined;
 }
 
 export async function createCategory(data: any) {
@@ -141,30 +187,23 @@ export async function deleteCategory(id: string) {
   return !error;
 }
 
-// ── Products ────────────────────────────────────────
+// ── Products (from JSON) ────────────────────────────
 export async function getProducts(categoryId?: string) {
-  let query = supabase.from("products").select("*");
-  if (categoryId) query = query.eq("category_id", categoryId);
-  query = query.eq("is_active", true);
-  const { data, error } = await query.order("id");
-  if (error) return [];
-  return data ?? [];
+  const data = loadDBData();
+  let products = (data.products ?? []).map(normalizeProduct);
+  if (categoryId) products = products.filter((p: any) => p.category_id === categoryId);
+  return products.filter((p: any) => p.is_active);
 }
 
 export async function getAllProducts() {
-  const { data, error } = await supabase.from("products").select("*");
-  if (error) return [];
-  return data ?? [];
+  const data = loadDBData();
+  return (data.products ?? []).map(normalizeProduct);
 }
 
 export async function getProductById(id: string) {
-  const { data, error } = await supabase
-    .from("products")
-    .select("*")
-    .eq("id", id)
-    .single();
-  if (error) return undefined;
-  return data;
+  const data = loadDBData();
+  const prod = (data.products ?? []).find((p: any) => p.id === id);
+  return prod ? normalizeProduct(prod) : undefined;
 }
 
 export async function createProduct(data: any) {
@@ -196,24 +235,16 @@ export async function deleteProduct(id: string) {
   return !error;
 }
 
-// ── Banners ─────────────────────────────────────────
+// ── Banners (from JSON) ─────────────────────────────
 export async function getBanners() {
-  const { data, error } = await supabase
-    .from("banners")
-    .select("*")
-    .order("sort_order", { ascending: true });
-  if (error) return [];
-  return data ?? [];
+  const data = loadDBData();
+  return (data.banners ?? []).map(normalizeBanner).filter((b: any) => b.is_active);
 }
 
 export async function getBannerById(id: string) {
-  const { data, error } = await supabase
-    .from("banners")
-    .select("*")
-    .eq("id", id)
-    .single();
-  if (error) return undefined;
-  return data;
+  const data = loadDBData();
+  const banner = (data.banners ?? []).find((b: any) => b.id === id);
+  return banner ? normalizeBanner(banner) : undefined;
 }
 
 export async function createBanner(data: any) {
@@ -245,7 +276,7 @@ export async function deleteBanner(id: string) {
   return !error;
 }
 
-// ── Orders ──────────────────────────────────────────
+// ── Orders (from Supabase) ──────────────────────────
 export async function readOrders() {
   const { data, error } = await supabase
     .from("orders")
@@ -286,7 +317,7 @@ export async function createOrder(data: any) {
   return result;
 }
 
-// ── Contact Messages ────────────────────────────────
+// ── Contact Messages (from Supabase) ────────────────
 export async function readMessages() {
   const { data, error } = await supabase
     .from("contact_messages")
@@ -394,8 +425,8 @@ export async function quoteCart(
 ): Promise<CartQuote> {
   const products = await getAllProducts();
   const categories = await getCategories();
-  const byId = new Map(products.map((p: any) => [p.id, p]));
-  const catById = new Map(categories.map((c: any) => [c.id, c]));
+  const byId = new Map<string, DBProduct>(products.map((p: DBProduct) => [p.id, p]));
+  const catById = new Map<string, DBCategory>(categories.map((c: DBCategory) => [c.id, c]));
 
   const items: QuoteItem[] = [];
   const seen = new Set<string>();
