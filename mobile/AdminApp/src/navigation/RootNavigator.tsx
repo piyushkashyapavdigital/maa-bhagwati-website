@@ -2,6 +2,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import React from 'react';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { AnalyticsScreen } from '../screens/AnalyticsScreen';
 import { BannersScreen } from '../screens/BannersScreen';
@@ -30,6 +31,7 @@ const TAB_ICONS: Record<keyof MainTabParamList, string> = {
 };
 
 function MainTabs() {
+  const insets = useSafeAreaInsets();
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
@@ -46,8 +48,9 @@ function MainTabs() {
         tabBarStyle: {
           backgroundColor: colors.paper,
           borderTopColor: colors.line,
-          height: 62,
-          paddingBottom: 8,
+          // Lift above 3-button nav keys; ~0 extra on gesture-nav phones.
+          height: 62 + insets.bottom,
+          paddingBottom: 8 + insets.bottom,
           paddingTop: 6,
         },
         tabBarLabelStyle: { fontSize: 10, fontWeight: '700' },

@@ -46,6 +46,10 @@ public/admin.apk
 mobile/AdminApp/android/app/build/
 mobile/AdminApp/android/.gradle/
 mobile/AdminApp/node_modules/
+client-mobile/android/app/build/
+client-mobile/android/.gradle/
+client-mobile/android/app/.cxx/
+client-mobile/node_modules/
 
 # typescript
 *.tsbuildinfo

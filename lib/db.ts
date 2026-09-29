@@ -218,7 +218,7 @@ function bannerToRow(data: any): any {
 }
 
 // Supabase order row (flat columns) → phone AdminApp shape (nested customer)
-function normalizeOrder(r: any): any {
+export function normalizeOrder(r: any): any {
   const c = r.customer ?? {};
   const customer = {
     name: c.name ?? r.customer_name ?? "",
@@ -526,6 +526,29 @@ export async function createOrder(data: any) {
     .single();
   if (error) throw error;
   return result ? normalizeOrder(result) : result;
+}
+
+// ── Client app orders (scoped to one Supabase Auth user) ────
+export async function createClientOrder(userId: string, data: any) {
+  const row = orderToRow(data);
+  if (userId) row.user_id = userId;
+  const { data: result, error } = await supabase
+    .from("orders")
+    .insert(row)
+    .select()
+    .single();
+  if (error) throw error;
+  return result ? normalizeOrder(result) : result;
+}
+
+export async function getOrdersByUserId(userId: string) {
+  const { data, error } = await supabase
+    .from("orders")
+    .select("*")
+    .eq("user_id", userId)
+    .order("date", { ascending: false });
+  if (error) return [];
+  return (data ?? []).map(normalizeOrder);
 }
 
 // ── Contact Messages (Supabase, phone-compatible shape) ───
