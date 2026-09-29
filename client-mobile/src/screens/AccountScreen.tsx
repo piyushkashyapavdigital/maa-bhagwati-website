@@ -4,6 +4,7 @@ import React from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { useAuth } from '../auth';
 import { useCart } from '../cart';
+import { APP_VERSION_NAME } from '../config';
 import { GradientHeader } from '../components/GradientHeader';
 import { PrimaryButton } from '../components/PrimaryButton';
 import { Screen } from '../components/Screen';
@@ -86,7 +87,7 @@ export function AccountScreen() {
           />
         </View>
         <Text className="mt-6 text-center text-xs text-muted">
-          Maa Bhagwati Pooja Bhandar · v1.0
+          Maa Bhagwati Pooja Bhandar · v{APP_VERSION_NAME}
         </Text>
       </ScrollView>
     </Screen>

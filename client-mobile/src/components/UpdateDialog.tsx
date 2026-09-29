@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { Modal, Text, View } from 'react-native';
 import { PrimaryButton } from './PrimaryButton';
-import { colors } from '../theme';
-import { downloadUpdate, type RemoteVersion } from '../update';
+import { downloadUpdate, skipVersion, type RemoteVersion } from '../update';
 
 export function UpdateDialog({
   remote,
@@ -13,9 +12,14 @@ export function UpdateDialog({
 }) {
   const [started, setStarted] = useState(false);
 
-  const start = () => {
+  const start = async () => {
     setStarted(true);
-    downloadUpdate(remote);
+    await downloadUpdate(remote);
+  };
+
+  const skip = async () => {
+    await skipVersion(remote.versionCode);
+    onLater();
   };
 
   return (
@@ -36,8 +40,9 @@ export function UpdateDialog({
           ) : null}
           {started ? (
             <Text className="mt-3 text-center text-xs leading-5 text-leaf">
-              Downloading… tap the download notification{'\n'}when it finishes
-              to install. ✅
+              Downloading… when it finishes, tap the{'\n'}"Maa Bhagwati
+              update" notification to install. ✅{'\n\n'}No notification? Open
+              Files → Downloads → tap the maa-bhagwati APK file.
             </Text>
           ) : null}
           <View className="mt-5 gap-3">
@@ -49,6 +54,14 @@ export function UpdateDialog({
               variant="ghost"
               onPress={onLater}
             />
+            {!started ? (
+              <Text
+                className="text-center text-xs font-bold text-muted"
+                onPress={skip}
+              >
+                Skip this version
+              </Text>
+            ) : null}
           </View>
           <Text className="mt-3 text-center text-[11px] text-muted">
             Your cart and login are kept after updating.

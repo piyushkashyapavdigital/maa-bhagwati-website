@@ -20,7 +20,7 @@ import { Screen } from '../components/Screen';
 import { UpdateDialog } from '../components/UpdateDialog';
 import { useShop } from '../shop';
 import { INR, colorForIndex, colors } from '../theme';
-import { fetchRemoteVersion, isUpdateAvailable, type RemoteVersion } from '../update';
+import { fetchRemoteVersion, getSkippedCode, isUpdateAvailable, type RemoteVersion } from '../update';
 import type { RootStackParamList } from '../navigation/types';
 
 export function HomeScreen() {
@@ -31,8 +31,8 @@ export function HomeScreen() {
   const [update, setUpdate] = React.useState<RemoteVersion | null>(null);
 
   React.useEffect(() => {
-    fetchRemoteVersion().then((r) => {
-      if (isUpdateAvailable(r)) setUpdate(r);
+    Promise.all([fetchRemoteVersion(), getSkippedCode()]).then(([r, skipped]) => {
+      if (isUpdateAvailable(r) && r!.versionCode !== skipped) setUpdate(r);
     });
   }, []);
 

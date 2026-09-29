@@ -1,4 +1,5 @@
-import { Linking } from 'react-native';
+import { Linking, PermissionsAndroid, Platform } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import ReactNativeBlobUtil from 'react-native-blob-util';
 import { APP_VERSION_CODE, UPDATE_VERSION_URL } from './config';
 
@@ -52,7 +53,21 @@ export async function fetchRemoteVersion(): Promise<RemoteVersion | null> {
  * shows a notification — user taps it to install. No extra permissions
  * needed from our side.
  */
-export function downloadUpdate(remote: RemoteVersion): void {
+export async function downloadUpdate(remote: RemoteVersion): Promise<'started' | 'blocked'> {
+  // Android 13+ hides DownloadManager's completion notification unless we
+  // hold POST_NOTIFICATIONS — without it the download finishes silently
+  // and there is nothing to tap. Ask first.
+  if (Platform.OS === 'android' && Number(Platform.Version) >= 33) {
+    const granted = await PermissionsAndroid.request(
+      PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS,
+    );
+    if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
+      // No notification permission → skip DownloadManager, open in browser
+      // so the user downloads + installs from there instead.
+      await Linking.openURL(remote.apkUrl).catch(() => {});
+      return 'blocked';
+    }
+  }
   const { config } = ReactNativeBlobUtil;
   config({
     fileCache: false,
@@ -60,7 +75,7 @@ export function downloadUpdate(remote: RemoteVersion): void {
       useDownloadManager: true,
       notification: true,
       title: 'Maa Bhagwati update',
-      description: `Downloading v${remote.versionName}…`,
+      description: `Downloading v${remote.versionName}… tap when finished to install`,
       mime: 'application/vnd.android.package-archive',
       mediaScannable: true,
       path: `${ReactNativeBlobUtil.fs.dirs.DownloadDir}/maa-bhagwati-v${remote.versionName}.apk`,
@@ -71,4 +86,26 @@ export function downloadUpdate(remote: RemoteVersion): void {
       // DownloadManager failed (or blocked) → fall back to browser.
       Linking.openURL(remote.apkUrl).catch(() => {});
     });
+  return 'started';
+}
+
+const SKIP_KEY = 'mbpb_skip_update_code';
+
+/** Version codes the user chose to skip (persisted). */
+export async function getSkippedCode(): Promise<number> {
+  try {
+    const raw = await AsyncStorage.getItem(SKIP_KEY);
+    const n = Number(raw);
+    return Number.isFinite(n) ? n : 0;
+  } catch {
+    return 0;
+  }
+}
+
+export async function skipVersion(code: number): Promise<void> {
+  try {
+    await AsyncStorage.setItem(SKIP_KEY, String(code));
+  } catch {
+    // non-fatal
+  }
 }

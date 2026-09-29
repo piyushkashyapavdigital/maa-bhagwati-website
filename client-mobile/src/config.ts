@@ -22,7 +22,8 @@ export const FREE_DELIVERY_ABOVE = 500;
 // next to a version.json. The app checks on launch and pops an
 // "Update available" dialog. Bump APP_VERSION_CODE together with
 // android versionCode on every release build.
-export const APP_VERSION_CODE = 3;
+export const APP_VERSION_CODE = 4;
+export const APP_VERSION_NAME = '1.1.1';
 export const UPDATE_VERSION_URL =
   'https://raw.githubusercontent.com/piyushkashyapavdigital/maa-bhagwati-website/main/updates/client/version.json';
 
