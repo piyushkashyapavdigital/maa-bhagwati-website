@@ -26,7 +26,10 @@ export async function PUT(
     return NextResponse.json({ success: true, product });
   } catch (e) {
     console.error("PUT /api/admin/products/[id] failed:", e);
-    const detail = e instanceof Error ? e.message : "Bad request";
+    const detail =
+      e && typeof e === "object" && "message" in e
+        ? JSON.stringify({ message: (e as any).message, details: (e as any).details, hint: (e as any).hint, code: (e as any).code })
+        : String(e);
     return NextResponse.json({ error: `Bad request: ${detail}` }, { status: 400 });
   }
 }
