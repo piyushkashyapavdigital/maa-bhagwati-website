@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getCategories, createCategory } from "@/lib/db";
+import { getAllCategories, createCategory } from "@/lib/db";
 import { requireAdmin } from "@/lib/auth";
 
 export async function GET() {
-  const categories = await getCategories();
+  const categories = await getAllCategories();
   return NextResponse.json({ success: true, categories });
 }
 

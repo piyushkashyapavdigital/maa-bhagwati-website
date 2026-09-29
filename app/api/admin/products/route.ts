@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getProducts, createProduct } from "@/lib/db";
+import { getAllProducts, createProduct } from "@/lib/db";
 import { requireAdmin } from "@/lib/auth";
 
 export async function GET() {
-  const products = await getProducts();
+  const products = await getAllProducts();
   return NextResponse.json({ success: true, total: products.length, products });
 }
 

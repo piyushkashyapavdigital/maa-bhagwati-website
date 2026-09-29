@@ -192,6 +192,71 @@ function bannerToRow(data: any): any {
   return row;
 }
 
+// Supabase order row (flat columns) → phone AdminApp shape (nested customer)
+function normalizeOrder(r: any): any {
+  const c = r.customer ?? {};
+  const customer = {
+    name: c.name ?? r.customer_name ?? "",
+    phone: c.phone ?? r.customer_phone ?? "",
+    email: c.email ?? r.customer_email,
+    address1: c.address1 ?? r.address1 ?? "",
+    address2: c.address2 ?? r.address2,
+    city: c.city ?? r.city ?? "",
+    state: c.state ?? r.state ?? "",
+    pincode: c.pincode ?? r.pincode ?? "",
+    landmark: c.landmark ?? r.landmark,
+    notes: c.notes ?? r.notes,
+  };
+  return {
+    ...r,
+    id: r.id ?? "",
+    rzpOrderId: r.rzp_order_id ?? r.rzpOrderId ?? r.id ?? "",
+    rzp_order_id: r.rzp_order_id ?? r.rzpOrderId ?? r.id ?? "",
+    paymentId: r.payment_id ?? r.paymentId,
+    payment_id: r.payment_id ?? r.paymentId,
+    date: r.date,
+    status: r.status ?? "Pending",
+    customer,
+    items: r.items ?? [],
+    subtotal: r.subtotal ?? 0,
+    deliveryCharge: r.delivery_charge ?? r.deliveryCharge ?? 0,
+    delivery_charge: r.delivery_charge ?? r.deliveryCharge ?? 0,
+    total: r.total ?? 0,
+  };
+}
+
+function normalizeMessage(r: any): any {
+  return { ...r, createdAt: r.createdAt ?? r.created_at };
+}
+
+// Phone/website order (nested customer, camelCase) → Supabase row
+function orderToRow(data: any): any {
+  const c = data.customer ?? {};
+  const row: any = {
+    id: data.id,
+    rzp_order_id: data.rzp_order_id ?? data.rzpOrderId ?? data.id,
+    date: data.date ?? new Date().toISOString(),
+    status: data.status ?? "Pending",
+    customer_name: c.name ?? data.customer_name,
+    customer_phone: c.phone ?? data.customer_phone,
+    customer_email: c.email ?? data.customer_email,
+    address1: c.address1 ?? data.address1,
+    address2: c.address2 ?? data.address2,
+    city: c.city ?? data.city,
+    state: c.state ?? data.state,
+    pincode: c.pincode ?? data.pincode,
+    landmark: c.landmark ?? data.landmark,
+    notes: c.notes ?? data.notes,
+    items: data.items ?? [],
+    subtotal: data.subtotal ?? 0,
+    delivery_charge: data.delivery_charge ?? data.deliveryCharge ?? 0,
+    total: data.total ?? 0,
+    payment_id: c.paymentId ?? data.payment_id ?? data.paymentId,
+  };
+  for (const k of Object.keys(row)) if (row[k] === undefined) delete row[k];
+  return row;
+}
+
 // ── Categories (Supabase first, db.json fallback) ─────────
 export async function getCategories() {
   if (isSupabaseConfigured) {
@@ -398,14 +463,14 @@ export async function deleteBanner(id: string) {
   return !error;
 }
 
-// ── Orders (from Supabase) ──────────────────────────
+// ── Orders (Supabase, phone-compatible shape) ─────────────
 export async function readOrders() {
   const { data, error } = await supabase
     .from("orders")
     .select("*")
     .order("date", { ascending: false });
   if (error) return [];
-  return data ?? [];
+  return (data ?? []).map(normalizeOrder);
 }
 
 export async function getOrderById(id: string) {
@@ -415,7 +480,7 @@ export async function getOrderById(id: string) {
     .eq("id", id)
     .single();
   if (error) return undefined;
-  return data;
+  return data ? normalizeOrder(data) : undefined;
 }
 
 export async function updateOrderStatus(id: string, status: string) {
@@ -432,21 +497,21 @@ export async function updateOrderStatus(id: string, status: string) {
 export async function createOrder(data: any) {
   const { data: result, error } = await supabase
     .from("orders")
-    .insert(data)
+    .insert(orderToRow(data))
     .select()
     .single();
   if (error) throw error;
-  return result;
+  return result ? normalizeOrder(result) : result;
 }
 
-// ── Contact Messages (from Supabase) ────────────────
+// ── Contact Messages (Supabase, phone-compatible shape) ───
 export async function readMessages() {
   const { data, error } = await supabase
     .from("contact_messages")
     .select("*")
     .order("created_at", { ascending: false });
   if (error) return [];
-  return data ?? [];
+  return (data ?? []).map(normalizeMessage);
 }
 
 export async function getMessageById(id: string) {
@@ -470,53 +535,178 @@ export async function markMessageRead(id: string) {
   return data;
 }
 
-// ── Stats ───────────────────────────────────────────
+// ── Stats (phone AdminApp StatsPayload shape) ─────────────
+const ORDER_STATUSES = ["Pending", "Confirmed", "Shipped", "Delivered", "Failed"];
+
+function emptyStats() {
+  return {
+    generatedAt: new Date().toISOString(),
+    totals: {
+      revenue: 0,
+      orders: 0,
+      activeProducts: 0,
+      products: 0,
+      categories: 0,
+      customers: 0,
+      unreadMessages: 0,
+    },
+    ordersByStatus: Object.fromEntries(ORDER_STATUSES.map((s) => [s, 0])),
+    revenueSeries: [],
+    topProducts: [],
+    categoryRevenue: [],
+    lowStock: [],
+    recentOrders: [],
+  };
+}
+
 export async function computeStats(from?: string, to?: string) {
-  let query = supabase.from("orders").select("*").neq("status", "Failed");
-  if (from) query = query.gte("date", from);
-  if (to) query = query.lte("date", to);
-  const { data: orders, error } = await query;
-  if (error) return { revenue: 0, orders: 0, ordersByStatus: {}, revenueSeries: [], recentOrders: [] };
+  try {
+    const [products, categories] = await Promise.all([
+      getAllProducts(),
+      getAllCategories(),
+    ]);
+    const { data: orderRows } = await supabase
+      .from("orders")
+      .select("*")
+      .neq("status", "Failed");
+    const allRows = (orderRows ?? []).map(normalizeOrder);
+    const { data: msgRows } = await supabase
+      .from("contact_messages")
+      .select("id,read");
 
-  const filteredOrders = orders ?? [];
-  const revenue = filteredOrders.reduce((s: number, o: any) => s + (Number(o.total) || 0), 0);
+    const fromT = from ? new Date(from + "T00:00:00.000Z").getTime() : null;
+    const toT = to ? new Date(to + "T23:59:59.999Z").getTime() : null;
+    const inRange = (dateStr: string) => {
+      const t = new Date(dateStr).getTime();
+      if (fromT && t < fromT) return false;
+      if (toT && t > toT) return false;
+      return true;
+    };
+    const orders = allRows.filter((o: any) => inRange(o.date ?? ""));
 
-  const ordersByStatus: Record<string, number> = {};
-  for (const o of orders ?? []) {
-    ordersByStatus[o.status] = (ordersByStatus[o.status] ?? 0) + 1;
+    const revenue = orders.reduce((s: number, o: any) => s + (Number(o.total) || 0), 0);
+    const customers = new Set(
+      orders.map((o: any) => o.customer?.phone).filter(Boolean)
+    ).size;
+
+    const ordersByStatus: Record<string, number> = {};
+    for (const s of ORDER_STATUSES) ordersByStatus[s] = 0;
+    for (const o of orders) {
+      ordersByStatus[o.status] = (ordersByStatus[o.status] ?? 0) + 1;
+    }
+
+    const DAY = 86_400_000;
+    const days =
+      fromT && toT
+        ? Math.min(365, Math.max(1, Math.ceil((toT - fromT) / DAY) + 1))
+        : 14;
+    const start = fromT
+      ? new Date(fromT).toISOString().slice(0, 10)
+      : new Date(Date.now() - (days - 1) * DAY).toISOString().slice(0, 10);
+    const bucket = new Map<string, { revenue: number; orders: number }>();
+    for (const o of orders) {
+      const key = (o.date ?? "").slice(0, 10);
+      if (!key) continue;
+      const cur = bucket.get(key) ?? { revenue: 0, orders: 0 };
+      cur.revenue += Number(o.total) || 0;
+      cur.orders += 1;
+      bucket.set(key, cur);
+    }
+    const revenueSeries = [];
+    for (let i = 0; i < days; i++) {
+      const date = new Date(new Date(start).getTime() + i * DAY)
+        .toISOString()
+        .slice(0, 10);
+      const v = bucket.get(date) ?? { revenue: 0, orders: 0 };
+      revenueSeries.push({ date, revenue: v.revenue, orders: v.orders });
+    }
+
+    const byId = new Map<string, any>(products.map((p: any) => [p.id, p]));
+    const agg = new Map<string, any>();
+    for (const o of orders) {
+      for (const item of o.items ?? []) {
+        const p = byId.get(item.id);
+        const cur = agg.get(item.id) ?? {
+          id: item.id,
+          name: p?.name ?? item.name ?? item.id,
+          emoji: p?.emoji ?? "🪔",
+          qty: 0,
+          revenue: 0,
+        };
+        cur.qty += Number(item.qty) || 0;
+        cur.revenue += (Number(item.price) || 0) * (Number(item.qty) || 0);
+        agg.set(item.id, cur);
+      }
+    }
+    const topProducts = [...agg.values()]
+      .sort((a, b) => b.qty - a.qty)
+      .slice(0, 5);
+
+    const catRev = new Map<string, number>();
+    for (const o of orders) {
+      for (const item of o.items ?? []) {
+        const p: any = byId.get(item.id);
+        const cid = p?.category_id ?? p?.categoryId ?? "uncategorized";
+        catRev.set(cid, (catRev.get(cid) ?? 0) + (Number(item.price) || 0) * (Number(item.qty) || 0));
+      }
+    }
+    const catById = new Map(categories.map((c: any) => [c.id, c.name]));
+    const categoryRevenue = [...catRev.entries()]
+      .map(([categoryId, rev]) => ({
+        categoryId,
+        name:
+          catById.get(categoryId) ??
+          (categoryId === "uncategorized" ? "Uncategorized" : categoryId),
+        revenue: rev,
+      }))
+      .sort((a, b) => b.revenue - a.revenue);
+
+    const lowStock = products
+      .filter((p: any) => p.is_active && (Number(p.stock) || 0) <= 5)
+      .map((p: any) => ({
+        id: p.id,
+        name: p.name,
+        emoji: p.emoji ?? "🪔",
+        stock: p.stock ?? 0,
+        unit: p.unit ?? "",
+      }));
+
+    const recentOrders = [...allRows]
+      .sort((a: any, b: any) => (b.date ?? "").localeCompare(a.date ?? ""))
+      .slice(0, 5)
+      .map((o: any) => ({
+        id: o.id,
+        total: o.total ?? 0,
+        status: o.status,
+        date: o.date,
+        customerName: o.customer?.name ?? "",
+        itemsCount: (o.items ?? []).reduce((s: number, i: any) => s + (Number(i.qty) || 0), 0),
+      }));
+
+    const unreadMessages = (msgRows ?? []).filter((m: any) => !m.read).length;
+
+    return {
+      generatedAt: new Date().toISOString(),
+      totals: {
+        revenue,
+        orders: allRows.length,
+        activeProducts: products.filter((p: any) => p.is_active).length,
+        products: products.length,
+        categories: categories.length,
+        customers,
+        unreadMessages,
+      },
+      ordersByStatus,
+      revenueSeries,
+      topProducts,
+      categoryRevenue,
+      lowStock,
+      recentOrders,
+    };
+  } catch (e) {
+    console.error("computeStats failed:", e);
+    return emptyStats();
   }
-
-  const bucket = new Map<string, { revenue: number; orders: number }>();
-  for (const o of filteredOrders) {
-    const key = o.date?.slice(0, 10) ?? "";
-    const cur = bucket.get(key) ?? { revenue: 0, orders: 0 };
-    cur.revenue += Number(o.total);
-    cur.orders += 1;
-    bucket.set(key, cur);
-  }
-
-  const days = (from && to)
-    ? Math.min(365, Math.max(1, Math.ceil((new Date(to).getTime() - new Date(from).getTime()) / 86_400_000) + 1))
-    : 14;
-  const now = Date.now();
-  const start = from
-    ? new Date(from).toISOString().slice(0, 10)
-    : new Date(now - (days - 1) * 86_400_000).toISOString().slice(0, 10);
-
-  const revenueSeries = [];
-  for (let i = 0; i < days; i++) {
-    const date = new Date(new Date(start).getTime() + i * 86_400_000).toISOString().slice(0, 10);
-    const v = bucket.get(date) ?? { revenue: 0, orders: 0 };
-    revenueSeries.push({ date, revenue: v.revenue, orders: v.orders });
-  }
-
-  const recentOrders = filteredOrders
-    .filter((o: any) => o.status !== "Failed")
-    .sort((a: any, b: any) => b.date?.localeCompare(a.date ?? "") ?? 0)
-    .slice(0, 5)
-    .map((o: any) => ({ id: o.id, date: o.date, total: o.total, status: o.status }));
-
-  return { revenue, orders: orders.length, ordersByStatus, revenueSeries, recentOrders };
 }
 
 // ── Cart Quote ──────────────────────────────────
