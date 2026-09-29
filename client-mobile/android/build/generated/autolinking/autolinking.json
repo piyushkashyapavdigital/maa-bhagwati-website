@@ -28,6 +28,31 @@
         }
       }
     },
+    "react-native-blob-util": {
+      "root": "/home/Kashyap/AV/maa-bhagwati-pooja-bhandar/client-mobile/node_modules/react-native-blob-util",
+      "name": "react-native-blob-util",
+      "platforms": {
+        "ios": {
+          "podspecPath": "/home/Kashyap/AV/maa-bhagwati-pooja-bhandar/client-mobile/node_modules/react-native-blob-util/react-native-blob-util.podspec",
+          "version": "0.25.1",
+          "configurations": [],
+          "scriptPhases": []
+        },
+        "android": {
+          "sourceDir": "/home/Kashyap/AV/maa-bhagwati-pooja-bhandar/client-mobile/node_modules/react-native-blob-util/android",
+          "packageImportPath": "import com.ReactNativeBlobUtil.ReactNativeBlobUtilPackage;",
+          "packageInstance": "new ReactNativeBlobUtilPackage()",
+          "buildTypes": [],
+          "libraryName": "ReactNativeBlobUtilSpec",
+          "componentDescriptors": [],
+          "cmakeListsPath": "/home/Kashyap/AV/maa-bhagwati-pooja-bhandar/client-mobile/node_modules/react-native-blob-util/android/build/generated/source/codegen/jni/CMakeLists.txt",
+          "cxxModuleCMakeListsModuleName": null,
+          "cxxModuleCMakeListsPath": null,
+          "cxxModuleHeaderName": null,
+          "isPureCxxDependency": false
+        }
+      }
+    },
     "react-native-gesture-handler": {
       "root": "/home/Kashyap/AV/maa-bhagwati-pooja-bhandar/client-mobile/node_modules/react-native-gesture-handler",
       "name": "react-native-gesture-handler",

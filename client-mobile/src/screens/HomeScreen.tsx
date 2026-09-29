@@ -17,8 +17,10 @@ import { GradientHeader } from '../components/GradientHeader';
 import { LoadingView } from '../components/LoadingView';
 import { ProductCard } from '../components/ProductCard';
 import { Screen } from '../components/Screen';
+import { UpdateDialog } from '../components/UpdateDialog';
 import { useShop } from '../shop';
 import { INR, colorForIndex, colors } from '../theme';
+import { fetchRemoteVersion, isUpdateAvailable, type RemoteVersion } from '../update';
 import type { RootStackParamList } from '../navigation/types';
 
 export function HomeScreen() {
@@ -26,6 +28,13 @@ export function HomeScreen() {
   const { ready, error, categories, products, banners, refresh } = useShop();
   const { count } = useCart();
   const [refreshing, setRefreshing] = React.useState(false);
+  const [update, setUpdate] = React.useState<RemoteVersion | null>(null);
+
+  React.useEffect(() => {
+    fetchRemoteVersion().then((r) => {
+      if (isUpdateAvailable(r)) setUpdate(r);
+    });
+  }, []);
 
   const featured = useMemo(() => products.slice(0, 10), [products]);
 
@@ -40,6 +49,9 @@ export function HomeScreen() {
 
   return (
     <Screen>
+      {update ? (
+        <UpdateDialog remote={update} onLater={() => setUpdate(null)} />
+      ) : null}
       <GradientHeader
         title="Maa Bhagwati"
         subtitle="Pooja Bhandar 🪔"
