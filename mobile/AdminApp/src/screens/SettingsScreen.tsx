@@ -112,12 +112,13 @@ export function SettingsScreen() {
             Device setup
           </Text>
           <Text className="text-xs leading-5 text-muted">
-            On your computer run:{'\n\n'}
+            Live setup:{'\n\n'}
+            API base URL{'\n'}
             <Text className="font-mono text-[11px] text-ink">
-              adb reverse tcp:8787 tcp:8787{'\n'}adb reverse tcp:3000 tcp:3000
+              https://maa-bhagwati.vercel.app
             </Text>
             {'\n\n'}
-            API default port 8787 (bun run dev in mobile/api). Website on 3000.
+            The admin app syncs directly with the live website. Product images load from the same address — no computer or cable needed.
           </Text>
         </View>
 

@@ -81,8 +81,8 @@ export function LoginScreen() {
               onPress={submit}
             />
             <Text className="mt-4 text-center text-xs leading-4 text-muted">
-              Token lives in mobile/api/.env → ADMIN_TOKEN.{'\n'}
-              Server must be running on :8787 (adb reverse tcp:8787 tcp:8787).
+              Token is the ADMIN_TOKEN value.{'\n'}
+              Ask the site owner for the token.
             </Text>
           </View>
         </ScrollView>

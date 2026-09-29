@@ -46,10 +46,10 @@ describe('ApiError', () => {
 
 describe('api module', () => {
   it('exports defaults', () => {
-    expect(api.DEFAULT_API_URL).toBe('http://192.168.1.34:8787');
-    expect(api.DEFAULT_SITE_URL).toBe('http://192.168.1.34:3000');
-    expect(api.getApiBase()).toBe('http://192.168.1.34:8787');
-    expect(api.getSiteBase()).toBe('http://192.168.1.34:3000');
+    expect(api.DEFAULT_API_URL).toBe('https://maa-bhagwati.vercel.app');
+    expect(api.DEFAULT_SITE_URL).toBe('https://maa-bhagwati.vercel.app');
+    expect(api.getApiBase()).toBe('https://maa-bhagwati.vercel.app');
+    expect(api.getSiteBase()).toBe('https://maa-bhagwati.vercel.app');
     expect(api.getToken()).toBe('');
   });
 
@@ -97,11 +97,11 @@ describe('api module', () => {
   });
   it('resolveImage maps /images/uploads/ to api base', () => {
     expect(api.resolveImage('/images/uploads/abc.png')).toBe(
-      'http://192.168.1.34:8787/uploads/abc.png'
+      'https://maa-bhagwati.vercel.app/api/upload/abc.png'
     );
   });
   it('resolveImage maps plain paths to site base', () => {
-    expect(api.resolveImage('/logo.png')).toBe('http://192.168.1.34:3000/logo.png');
+    expect(api.resolveImage('/logo.png')).toBe('https://maa-bhagwati.vercel.app/logo.png');
   });
   it('resolveImage returns undefined for empty', () => {
     expect(api.resolveImage(undefined)).toBeUndefined();

@@ -88,7 +88,7 @@ async function request<T>(
     res = await fetch(`${apiBase}${path}`, { ...init, headers });
   } catch {
     throw new ApiError(
-      `Cannot reach server at ${apiBase}. Start it with \`bun run dev\` in mobile/api and run \`adb reverse tcp:8787 tcp:8787\`.`,
+      `Cannot reach server at ${apiBase}. Check the API base URL in Settings and your internet connection.`,
       0
     );
   }

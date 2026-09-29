@@ -72,7 +72,7 @@ export function MoreScreen() {
             Maa Bhagwati Pooja Bhandar
           </Text>
           <Text className="mt-1 text-center text-xs text-muted">
-            Admin app · data shared with the website{'\n'}via mobile/api on :8787
+            Admin app · data shared with the website{'\n'}via https://maa-bhagwati.vercel.app
           </Text>
         </View>
       </ScrollView>

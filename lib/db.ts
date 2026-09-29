@@ -47,6 +47,31 @@ function normalizeProduct(p: any): DBProduct {
   };
 }
 
+function numericProductId(id: string): number {
+  const m = /^prod-(\d+)$/.exec(id ?? "");
+  return m ? Number(m[1]) : Number.MAX_SAFE_INTEGER;
+}
+
+// Stable catalog order: oldest first, numeric id tiebreak, file order last.
+// Without this, Supabase returns an updated row last (new heap tuple),
+// so an edited product jumps to the bottom of the shop.
+function sortProductsStable(list: DBProduct[]): DBProduct[] {
+  return list
+    .map((p, i) => ({ p, i }))
+    .sort((a, b) => {
+      const ca = a.p.created_at;
+      const cb = b.p.created_at;
+      if (ca && cb && ca !== cb) return ca < cb ? -1 : 1;
+      if (ca && !cb) return -1;
+      if (!ca && cb) return 1;
+      const na = numericProductId(a.p.id);
+      const nb = numericProductId(b.p.id);
+      if (na !== nb) return na - nb;
+      return a.i - b.i;
+    })
+    .map((x) => x.p);
+}
+
 function normalizeBanner(b: any): DBBanner {
   return {
     ...b,
@@ -339,26 +364,25 @@ export async function getProducts(categoryId?: string) {
     const { data, error } = await query;
     if (!error && data) {
       const rows = data.map(normalizeProduct).filter((p: any) => p.is_active);
-      if (rows.length > 0 || categoryId) return rows;
-      // no category filter + rows empty → fall through to db.json
-      if (data.length > 0) return rows;
+      if (rows.length > 0 || categoryId) return sortProductsStable(rows);
+      if (data.length > 0) return sortProductsStable(rows);
     }
   }
   const data = loadDBData();
   let products = (data.products ?? []).map(normalizeProduct);
   if (categoryId) products = products.filter((p: any) => p.category_id === categoryId);
-  return products.filter((p: any) => p.is_active);
+  return sortProductsStable(products.filter((p: any) => p.is_active));
 }
 
 export async function getAllProducts() {
   if (isSupabaseConfigured) {
     const { data, error } = await supabase.from("products").select("*");
     if (!error && data && data.length > 0) {
-      return data.map(normalizeProduct);
+      return sortProductsStable(data.map(normalizeProduct));
     }
   }
   const data = loadDBData();
-  return (data.products ?? []).map(normalizeProduct);
+  return sortProductsStable((data.products ?? []).map(normalizeProduct));
 }
 
 export async function getProductById(id: string) {
