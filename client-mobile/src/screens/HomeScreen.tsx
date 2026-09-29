@@ -156,7 +156,7 @@ export function HomeScreen() {
             {/* Featured */}
             <View className="mb-2 flex-row items-center justify-between px-1">
               <Text className="text-sm font-extrabold uppercase tracking-wide text-maroon">
-                Featured samagri
+                Featured samagri ✨ New
               </Text>
               <Text
                 className="text-xs font-bold text-gold-dark"
