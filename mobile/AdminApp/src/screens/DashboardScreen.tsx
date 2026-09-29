@@ -11,7 +11,9 @@ import { LoadingView } from '../components/LoadingView';
 import { Screen } from '../components/Screen';
 import { StatCard } from '../components/StatCard';
 import { StatusBadge } from '../components/StatusBadge';
+import { UpdateDialog } from '../components/UpdateDialog';
 import { INR, colors, formatDate } from '../theme';
+import { fetchRemoteVersion, getSkippedCode, isUpdateAvailable, type RemoteVersion } from '../update';
 import type { RootStackParamList } from '../navigation/types';
 import type { StatsPayload } from '../types';
 
@@ -21,6 +23,7 @@ export function DashboardScreen() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [update, setUpdate] = useState<RemoteVersion | null>(null);
 
   const load = useCallback(async () => {
     setError('');
@@ -37,6 +40,9 @@ export function DashboardScreen() {
 
   React.useEffect(() => {
     load();
+    Promise.all([fetchRemoteVersion(), getSkippedCode()]).then(([r, skipped]) => {
+      if (isUpdateAvailable(r) && r!.versionCode !== skipped) setUpdate(r);
+    });
   }, [load]);
 
   const onRefresh = () => {
@@ -58,6 +64,9 @@ export function DashboardScreen() {
 
   return (
     <Screen>
+      {update ? (
+        <UpdateDialog remote={update} onLater={() => setUpdate(null)} />
+      ) : null}
       <GradientHeader
         title="Dashboard"
         subtitle={new Date().toLocaleDateString('en-IN', {
