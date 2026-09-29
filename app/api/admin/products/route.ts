@@ -15,7 +15,9 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const product = await createProduct(body);
     return NextResponse.json({ success: true, product }, { status: 201 });
-  } catch {
-    return NextResponse.json({ error: "Bad request" }, { status: 400 });
+  } catch (e) {
+    console.error("POST /api/admin/products failed:", e);
+    const detail = e instanceof Error ? e.message : "Bad request";
+    return NextResponse.json({ error: `Bad request: ${detail}` }, { status: 400 });
   }
 }

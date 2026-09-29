@@ -24,8 +24,10 @@ export async function PUT(
     const product = await updateProduct(id, body);
     if (!product) return NextResponse.json({ error: "Product not found" }, { status: 404 });
     return NextResponse.json({ success: true, product });
-  } catch {
-    return NextResponse.json({ error: "Bad request" }, { status: 400 });
+  } catch (e) {
+    console.error("PUT /api/admin/products/[id] failed:", e);
+    const detail = e instanceof Error ? e.message : "Bad request";
+    return NextResponse.json({ error: `Bad request: ${detail}` }, { status: 400 });
   }
 }
 
