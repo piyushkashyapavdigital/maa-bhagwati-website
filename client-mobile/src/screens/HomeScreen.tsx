@@ -148,20 +148,20 @@ export function HomeScreen() {
         colors={['#6B1D1D', '#4A1010', '#350B0B']}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
-        style={{ paddingTop: insets.top + 8, paddingBottom: 16, paddingHorizontal: 16 }}
+        style={{ paddingTop: insets.top + 4, paddingBottom: 10, paddingHorizontal: 14 }}
       >
         {/* Top Header Row — brand only */}
         <View className="flex-row items-center justify-between">
           {/* Left: Brand Logo & Title */}
           <View className="flex-row items-center gap-2">
-            <View className="h-9 w-9 items-center justify-center rounded-full bg-gold/20 border border-gold/40">
-              <Text className="text-xl">🪔</Text>
+            <View className="h-8 w-8 items-center justify-center rounded-full bg-gold/20 border border-gold/40">
+              <Text className="text-lg">🪔</Text>
             </View>
             <View>
-              <Text className="text-base font-extrabold tracking-wide text-white leading-tight">
+              <Text className="text-sm font-extrabold tracking-wide text-white leading-tight">
                 Maa Bhagwati
               </Text>
-              <Text className="text-[11px] font-semibold text-gold-light leading-none">
+              <Text className="text-[10px] font-semibold text-gold-light leading-none">
                 Pooja Bhandar
               </Text>
             </View>
@@ -169,7 +169,7 @@ export function HomeScreen() {
         </View>
 
         {/* Search Bar Input Row — submits to Shop */}
-        <View className="mt-3.5 flex-row items-center rounded-full bg-white px-3.5 py-2 shadow-sm">
+        <View className="mt-2 flex-row items-center rounded-full bg-white px-3 py-1.5 shadow-sm">
           <Text className="mr-2 text-sm text-muted">🔍</Text>
           <TextInput
             value={searchQuery}

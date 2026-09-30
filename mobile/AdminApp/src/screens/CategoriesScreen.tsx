@@ -19,6 +19,7 @@ import { GradientHeader } from '../components/GradientHeader';
 import { LoadingView } from '../components/LoadingView';
 import { PrimaryButton } from '../components/PrimaryButton';
 import { Screen } from '../components/Screen';
+import { TabFooter } from '../components/TabFooter';
 import type { RootStackParamList } from '../navigation/types';
 import { colorForIndex, colors } from '../theme';
 import type { DBCategory } from '../types';
@@ -269,6 +270,7 @@ export function CategoriesScreen() {
           setDeleteError('');
         }}
       />
+      <TabFooter />
     </Screen>
   );
 }

@@ -6,6 +6,7 @@ import { GradientHeader } from '../components/GradientHeader';
 import { LoadingView } from '../components/LoadingView';
 import { PrimaryButton } from '../components/PrimaryButton';
 import { Screen } from '../components/Screen';
+import { TabFooter } from '../components/TabFooter';
 import { StatusBadge } from '../components/StatusBadge';
 import type { RootStackParamList } from '../navigation/types';
 import { INR, colors, formatDateTime } from '../theme';
@@ -176,6 +177,7 @@ export function OrderDetailScreen({ navigation, route }: Props) {
           </View>
         )}
       </ScrollView>
+      <TabFooter />
     </Screen>
   );
 }

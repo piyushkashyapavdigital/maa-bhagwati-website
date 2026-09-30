@@ -15,6 +15,7 @@ import { ErrorBanner } from '../components/ErrorBanner';
 import { GradientHeader } from '../components/GradientHeader';
 import { LoadingView } from '../components/LoadingView';
 import { Screen } from '../components/Screen';
+import { TabFooter } from '../components/TabFooter';
 import type { RootStackParamList } from '../navigation/types';
 import { colors, formatDateTime } from '../theme';
 import type { ContactMessage } from '../types';
@@ -126,6 +127,7 @@ export function MessagesScreen() {
           </Pressable>
         )}
       />
+      <TabFooter />
     </Screen>
   );
 }

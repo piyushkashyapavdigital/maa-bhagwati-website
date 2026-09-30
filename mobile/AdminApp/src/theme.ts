@@ -73,3 +73,16 @@ export function formatDateTime(iso: string): string {
     minute: '2-digit',
   });
 }
+
+/** Compact rupees for chart labels: ₹1L, ₹45K, ₹800. Never overflows. */
+export function shortINR(n: number): string {
+  if (n >= 100000) {
+    const v = n / 100000;
+    return `₹${Number.isInteger(v) ? v : v.toFixed(1)}L`;
+  }
+  if (n >= 1000) {
+    const v = n / 1000;
+    return `₹${Number.isInteger(v) ? v : v.toFixed(1)}K`;
+  }
+  return INR(n);
+}

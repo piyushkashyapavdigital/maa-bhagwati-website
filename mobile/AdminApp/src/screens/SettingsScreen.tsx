@@ -16,6 +16,7 @@ import { FormField } from '../components/FormField';
 import { GradientHeader } from '../components/GradientHeader';
 import { PrimaryButton } from '../components/PrimaryButton';
 import { Screen } from '../components/Screen';
+import { TabFooter } from '../components/TabFooter';
 import type { RootStackParamList } from '../navigation/types';
 import { colors } from '../theme';
 
@@ -133,6 +134,7 @@ export function SettingsScreen() {
           Maa Bhagwati Pooja Bhandar · Admin v1.0
         </Text>
       </ScrollView>
+      <TabFooter />
     </Screen>
   );
 }

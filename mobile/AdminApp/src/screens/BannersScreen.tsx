@@ -21,10 +21,11 @@ import { GradientHeader } from '../components/GradientHeader';
 import { LoadingView } from '../components/LoadingView';
 import { PrimaryButton } from '../components/PrimaryButton';
 import { Screen } from '../components/Screen';
+import { TabFooter } from '../components/TabFooter';
 import { ZoomableImage } from '../components/ZoomableImage';
 import type { RootStackParamList } from '../navigation/types';
 import { colors, formatDate } from '../theme';
-import { BANNER_PLACEMENTS, type DBBanner } from '../types';
+import { BANNER_PLACEMENTS, type DBBanner, type DBCategory } from '../types';
 
 export function BannersScreen() {
   const nav = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
@@ -38,14 +39,19 @@ export function BannersScreen() {
   const [newTitle, setNewTitle] = useState('');
   const [newLink, setNewLink] = useState('');
   const [newPlacement, setNewPlacement] = useState<string>('home_top');
+  const [linkCats, setLinkCats] = useState<DBCategory[]>([]);
   const [saving, setSaving] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState<DBBanner | null>(null);
 
   const load = useCallback(async () => {
     setError('');
     try {
-      const res = await api.get<{ banners: DBBanner[] }>('/api/admin/banners');
-      setBanners(res.banners);
+      const [bRes, cRes] = await Promise.all([
+        api.get<{ banners: DBBanner[] }>('/api/admin/banners'),
+        api.get<{ categories: DBCategory[] }>('/api/admin/categories').catch(() => ({ categories: [] as DBCategory[] })),
+      ]);
+      setBanners(bRes.banners);
+      setLinkCats(cRes.categories);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to load');
     } finally {
@@ -265,16 +271,38 @@ export function BannersScreen() {
               placeholderTextColor="#A8A29E"
               className="mb-3 rounded-xl border border-line px-4 py-3 text-base"
             />
-            <TextInput
-              value={newLink}
-              onChangeText={setNewLink}
-              placeholder="Link (optional) e.g. /category/havan-samagri"
-              placeholderTextColor="#A8A29E"
-              autoCapitalize="none"
-              className="mb-4 rounded-xl border border-line px-4 py-3 text-base"
-            />
+            <Text className="mb-1.5 text-sm font-bold text-maroon">Opens (tap to choose)</Text>
+            <View className="mb-4 flex-row flex-wrap gap-2 justify-center">
+              <Pressable
+                onPress={() => setNewLink('')}
+                className={`rounded-full border px-3 py-1.5 ${
+                  !newLink ? 'border-maroon bg-maroon' : 'border-line bg-white'
+                }`}
+              >
+                <Text className={`text-xs font-bold ${!newLink ? 'text-white' : 'text-muted'}`}>
+                  No link
+                </Text>
+              </Pressable>
+              {linkCats.map((c) => {
+                const v = `/category/${c.slug}`;
+                const active = newLink === v;
+                return (
+                  <Pressable
+                    key={c.id}
+                    onPress={() => setNewLink(v)}
+                    className={`rounded-full border px-3 py-1.5 ${
+                      active ? 'border-maroon bg-maroon' : 'border-line bg-white'
+                    }`}
+                  >
+                    <Text className={`text-xs font-bold ${active ? 'text-white' : 'text-muted'}`}>
+                      {c.name}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
             <Text className="mb-1.5 text-sm font-bold text-maroon">Show at</Text>
-            <View className="mb-4 flex-row gap-2">
+            <View className="mb-4 flex-row gap-2 justify-center">
               {BANNER_PLACEMENTS.map((p) => (
                 <Pressable
                   key={p.id}
@@ -322,6 +350,7 @@ export function BannersScreen() {
         onConfirm={doDelete}
         onCancel={() => setConfirmDelete(null)}
       />
+      <TabFooter />
     </Screen>
   );
 }

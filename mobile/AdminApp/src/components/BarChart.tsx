@@ -1,12 +1,14 @@
 import React from 'react';
 import { Text, View } from 'react-native';
-import { INR } from '../theme';
+import { shortINR } from '../theme';
 
 export interface BarDatum {
   label: string;
   value: number;
   caption?: string;
 }
+
+const LABEL_ZONE = 26;
 
 /** Views-drawn bar chart (no chart library). */
 export function BarChart({
@@ -34,19 +36,25 @@ export function BarChart({
     );
   }
 
+  // Bars scale into height - LABEL_ZONE so the tallest bar + its value
+  // label always stay INSIDE the card — even at ₹1L+ sales.
+  const plotH = Math.max(40, height - LABEL_ZONE);
+
   return (
     <View className="rounded-2xl border border-line bg-white p-4">
       <View className="flex-row items-end" style={{ height }}>
         {data.map((d, i) => {
-          const h = d.value === 0 ? 4 : Math.max(6, (d.value / max) * height);
+          const h = d.value === 0 ? 4 : Math.max(6, (d.value / max) * plotH);
           const isMax = d.value === max && d.value > 0;
           return (
             <View key={`${d.label}-${i}`} className="flex-1 items-center px-[2px]">
-              {isMax ? (
-                <Text className="mb-1 text-[9px] font-bold text-maroon">
-                  {INR(d.value)}
-                </Text>
-              ) : null}
+              <View style={{ height: LABEL_ZONE }} className="items-center justify-end">
+                {isMax ? (
+                  <Text className="mb-1 text-[9px] font-bold text-maroon" numberOfLines={1}>
+                    {shortINR(d.value)}
+                  </Text>
+                ) : null}
+              </View>
               <View
                 className="w-full rounded-t-md"
                 style={{

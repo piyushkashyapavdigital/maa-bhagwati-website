@@ -18,6 +18,7 @@ import { GradientHeader } from '../components/GradientHeader';
 import { LoadingView } from '../components/LoadingView';
 import { PrimaryButton } from '../components/PrimaryButton';
 import { Screen } from '../components/Screen';
+import { TabFooter } from '../components/TabFooter';
 import { ZoomableImage } from '../components/ZoomableImage';
 import type { RootStackParamList } from '../navigation/types';
 import { colorForIndex, colors } from '../theme';
@@ -317,6 +318,7 @@ export function ProductEditorScreen({ navigation, route }: Props) {
         onConfirm={remove}
         onCancel={() => setConfirmDelete(false)}
       />
+      <TabFooter />
     </Screen>
   );
 }
