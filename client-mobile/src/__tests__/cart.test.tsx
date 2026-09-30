@@ -17,6 +17,7 @@ const prod = (over: Partial<Product> = {}): Product => ({
   stock: 100,
   is_active: true,
   emoji: '🔴',
+  deal_percent: 0,
   ...over,
 });
 

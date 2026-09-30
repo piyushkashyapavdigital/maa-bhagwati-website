@@ -6,6 +6,7 @@ import { useAuth } from '../auth';
 import { useCart } from '../cart';
 import { APP_VERSION_NAME } from '../config';
 import { GradientHeader } from '../components/GradientHeader';
+import { Footer } from '../components/Footer';
 import { PrimaryButton } from '../components/PrimaryButton';
 import { Screen } from '../components/Screen';
 import type { RootStackParamList } from '../navigation/types';
@@ -89,6 +90,7 @@ export function AccountScreen() {
         <Text className="mt-6 text-center text-xs text-muted">
           Maa Bhagwati Pooja Bhandar · v{APP_VERSION_NAME}
         </Text>
+        <Footer />
       </ScrollView>
     </Screen>
   );

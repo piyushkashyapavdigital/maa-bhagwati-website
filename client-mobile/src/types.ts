@@ -27,6 +27,26 @@ export interface Product {
   is_active: boolean;
   isActive?: boolean;
   emoji: string;
+  deal_percent: number;
+  dealPercent?: number;
+}
+
+/** 0–90. 0 = no deal. */
+export function dealOf(p: Product): number {
+  const d = Math.floor(Number(p.deal_percent ?? p.dealPercent ?? 0));
+  return Number.isFinite(d) && d > 0 ? Math.min(d, 90) : 0;
+}
+
+/** Struck-through MRP derived from selling price + deal %. */
+export function mrpOf(p: Product): number {
+  const d = dealOf(p);
+  if (!d) return p.price;
+  return Math.round((p.price * 100) / (100 - d));
+}
+
+export function dealTagOf(p: Product): string {
+  const d = dealOf(p);
+  return d ? `${d}% OFF` : '';
 }
 
 export interface CartItem {

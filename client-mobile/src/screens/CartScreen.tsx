@@ -4,6 +4,7 @@ import React from 'react';
 import { FlatList, Image, Pressable, Text, View } from 'react-native';
 import { useCart } from '../cart';
 import { EmptyState } from '../components/EmptyState';
+import { Footer } from '../components/Footer';
 import { GradientHeader } from '../components/GradientHeader';
 import { PrimaryButton } from '../components/PrimaryButton';
 import { Screen } from '../components/Screen';
@@ -33,6 +34,7 @@ export function CartScreen() {
             data={items}
             keyExtractor={(i) => i.productId}
             contentContainerStyle={{ padding: 16, paddingBottom: 16 }}
+            ListFooterComponent={<Footer />}
             renderItem={({ item }) => (
               <View className="mb-3 flex-row rounded-2xl border border-line bg-white p-3">
                 <View className="h-16 w-16 items-center justify-center overflow-hidden rounded-xl bg-cream">

@@ -10,6 +10,7 @@ import { Screen } from '../components/Screen';
 import { Thumb } from '../components/Thumb';
 import { useShop } from '../shop';
 import { INR, colors } from '../theme';
+import { dealOf, dealTagOf, mrpOf } from '../types';
 import type { RootStackParamList } from '../navigation/types';
 
 type R = RouteProp<RootStackParamList, 'Product'>;
@@ -41,7 +42,7 @@ export function ProductScreen() {
         onBack={() => nav.goBack()}
       />
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 48 }}>
-        <View className="mb-4 h-64 items-center justify-center overflow-hidden rounded-3xl border border-line bg-white">
+        <View className="mb-4 aspect-[4/3] items-center justify-center overflow-hidden rounded-3xl border border-line bg-white">
           {product.image ? (
             <Image
               source={{ uri: product.image }}
@@ -60,9 +61,25 @@ export function ProductScreen() {
             {'  ·  '}Stock: {product.stock > 0 ? `${product.stock}` : 'Out of stock'}
           </Text>
           <View className="mt-3 flex-row items-center justify-between">
-            <Text className="text-2xl font-extrabold text-maroon">
-              {INR(product.price)}
-            </Text>
+            <View>
+              <View className="flex-row items-center gap-2">
+                <Text className="text-2xl font-extrabold text-maroon">
+                  {INR(product.price)}
+                </Text>
+                {dealOf(product) ? (
+                  <>
+                    <Text className="text-sm text-muted line-through">
+                      {INR(mrpOf(product))}
+                    </Text>
+                    <View className="rounded-md bg-teal px-1.5 py-0.5">
+                      <Text className="text-[10px] font-extrabold text-white">
+                        {dealTagOf(product)}
+                      </Text>
+                    </View>
+                  </>
+                ) : null}
+              </View>
+            </View>
             {product.stock > 0 ? (
               <QtyStepper product={product} />
             ) : (

@@ -42,6 +42,8 @@ function normalizeProduct(p: any): DBProduct {
     is_active: p.is_active ?? p.isActive ?? true,
     isActive: p.isActive ?? p.is_active ?? true,
     emoji: p.emoji ?? "",
+    deal_percent: p.deal_percent ?? p.dealPercent ?? 0,
+    dealPercent: p.dealPercent ?? p.deal_percent ?? 0,
     created_at: p.created_at,
     updated_at: p.updated_at,
   };
@@ -75,6 +77,7 @@ function sortProductsStable(list: DBProduct[]): DBProduct[] {
 function normalizeBanner(b: any): DBBanner {
   return {
     ...b,
+    placement: b.placement ?? "home_top",
     sort_order: b.sort_order ?? b.sortOrder ?? 0,
     is_active: b.is_active ?? b.isActive ?? true,
     sortOrder: b.sortOrder ?? b.sort_order ?? 0,
@@ -112,6 +115,8 @@ export interface DBProduct {
   is_active: boolean;
   isActive?: boolean;
   emoji: string;
+  deal_percent: number;
+  dealPercent?: number;
   created_at?: string;
   updated_at?: string;
 }
@@ -121,6 +126,7 @@ export interface DBBanner {
   image: string;
   title?: string;
   link?: string;
+  placement: string;
   sort_order: number;
   sortOrder?: number;
   is_active: boolean;
@@ -187,6 +193,8 @@ function productToRow(data: any): any {
   if (data.is_active !== undefined) row.is_active = data.is_active;
   else if (data.isActive !== undefined) row.is_active = data.isActive;
   if (data.emoji !== undefined) row.emoji = data.emoji;
+  if (data.deal_percent !== undefined) row.deal_percent = data.deal_percent;
+  else if (data.dealPercent !== undefined) row.deal_percent = data.dealPercent;
   return row;
 }
 
@@ -210,6 +218,7 @@ function bannerToRow(data: any): any {
   if (data.image !== undefined) row.image = data.image;
   if (data.title !== undefined) row.title = data.title;
   if (data.link !== undefined) row.link = data.link;
+  if (data.placement !== undefined) row.placement = data.placement;
   if (data.sort_order !== undefined) row.sort_order = data.sort_order;
   else if (data.sortOrder !== undefined) row.sort_order = data.sortOrder;
   if (data.is_active !== undefined) row.is_active = data.is_active;

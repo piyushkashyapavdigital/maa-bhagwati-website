@@ -6,6 +6,7 @@ import { api } from '../api';
 import { useAuth } from '../auth';
 import { EmptyState } from '../components/EmptyState';
 import { ErrorBanner } from '../components/ErrorBanner';
+import { Footer } from '../components/Footer';
 import { GradientHeader } from '../components/GradientHeader';
 import { LoadingView } from '../components/LoadingView';
 import { PrimaryButton } from '../components/PrimaryButton';
@@ -76,6 +77,7 @@ export function OrdersScreen() {
         data={orders}
         keyExtractor={(o) => o.id}
         contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
+        ListFooterComponent={orders.length > 0 ? <Footer /> : <></>}
         ListEmptyComponent={
           <EmptyState
             title="No orders yet"

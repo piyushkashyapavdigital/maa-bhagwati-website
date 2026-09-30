@@ -14,6 +14,7 @@ export interface Banner {
   image: string;
   title?: string;
   link?: string;
+  placement?: string;
 }
 
 export class ApiError extends Error {

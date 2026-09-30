@@ -24,7 +24,7 @@ import { Screen } from '../components/Screen';
 import { ZoomableImage } from '../components/ZoomableImage';
 import type { RootStackParamList } from '../navigation/types';
 import { colors, formatDate } from '../theme';
-import type { DBBanner } from '../types';
+import { BANNER_PLACEMENTS, type DBBanner } from '../types';
 
 export function BannersScreen() {
   const nav = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
@@ -37,6 +37,7 @@ export function BannersScreen() {
   const [newImage, setNewImage] = useState<string | null>(null);
   const [newTitle, setNewTitle] = useState('');
   const [newLink, setNewLink] = useState('');
+  const [newPlacement, setNewPlacement] = useState<string>('home_top');
   const [saving, setSaving] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState<DBBanner | null>(null);
 
@@ -96,11 +97,13 @@ export function BannersScreen() {
         image: newImage,
         title: newTitle.trim() || undefined,
         link: newLink.trim() || undefined,
+        placement: newPlacement,
       });
       setCreating(false);
       setNewImage(null);
       setNewTitle('');
       setNewLink('');
+      setNewPlacement('home_top');
       load();
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Save failed');
@@ -114,6 +117,19 @@ export function BannersScreen() {
       await api.put(`/api/admin/banners/${b.id}`, { isActive: !b.isActive });
       setBanners((prev) =>
         prev.map((x) => (x.id === b.id ? { ...x, isActive: !x.isActive } : x))
+      );
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Update failed');
+    }
+  };
+
+  const cyclePlacement = async (b: DBBanner) => {
+    const ids: string[] = BANNER_PLACEMENTS.map((p) => p.id);
+    const next = ids[(ids.indexOf(b.placement) + 1) % ids.length] ?? ids[0];
+    try {
+      await api.put(`/api/admin/banners/${b.id}`, { placement: next });
+      setBanners((prev) =>
+        prev.map((x) => (x.id === b.id ? { ...x, placement: next } : x))
       );
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Update failed');
@@ -198,6 +214,14 @@ export function BannersScreen() {
                 <Text className="text-xs text-muted">
                   {item.link || 'No link'} · added {formatDate(item.createdAt)}
                 </Text>
+                <Pressable
+                  onPress={() => cyclePlacement(item)}
+                  className="mt-1.5 self-start rounded-full bg-cream px-2.5 py-1"
+                >
+                  <Text className="text-[10px] font-extrabold text-maroon">
+                    📍 {BANNER_PLACEMENTS.find((p) => p.id === item.placement)?.label ?? item.placement} · tap to move
+                  </Text>
+                </Pressable>
               </View>
               <Switch
                 value={item.isActive}
@@ -249,6 +273,28 @@ export function BannersScreen() {
               autoCapitalize="none"
               className="mb-4 rounded-xl border border-line px-4 py-3 text-base"
             />
+            <Text className="mb-1.5 text-sm font-bold text-maroon">Show at</Text>
+            <View className="mb-4 flex-row gap-2">
+              {BANNER_PLACEMENTS.map((p) => (
+                <Pressable
+                  key={p.id}
+                  onPress={() => setNewPlacement(p.id)}
+                  className={`rounded-full border px-3 py-1.5 ${
+                    newPlacement === p.id
+                      ? 'border-maroon bg-maroon'
+                      : 'border-line bg-white'
+                  }`}
+                >
+                  <Text
+                    className={`text-xs font-bold ${
+                      newPlacement === p.id ? 'text-white' : 'text-muted'
+                    }`}
+                  >
+                    {p.label}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
             <View className="gap-3">
               <PrimaryButton
                 title={saving ? 'Saving' : 'Create banner'}

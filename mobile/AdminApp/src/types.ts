@@ -19,6 +19,7 @@ export interface DBProduct {
   referenceQuantity: string;
   stock: number;
   isActive: boolean;
+  dealPercent: number;
 }
 
 export interface DBBanner {
@@ -26,10 +27,16 @@ export interface DBBanner {
   image: string;
   title?: string;
   link?: string;
+  placement: string;
   sortOrder: number;
   isActive: boolean;
   createdAt: string;
 }
+
+export const BANNER_PLACEMENTS = [
+  { id: 'home_top', label: 'Home top' },
+  { id: 'home_mid', label: 'Home middle' },
+] as const;
 
 export interface OrderItem {
   id: string;

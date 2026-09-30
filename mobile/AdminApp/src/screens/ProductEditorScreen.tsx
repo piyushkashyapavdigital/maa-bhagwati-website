@@ -36,6 +36,7 @@ export function ProductEditorScreen({ navigation, route }: Props) {
   const [price, setPrice] = useState('');
   const [unit, setUnit] = useState('');
   const [stock, setStock] = useState('');
+  const [deal, setDeal] = useState('');
   const [image, setImage] = useState<string | null>(null);
   const [isActive, setIsActive] = useState(true);
   const [error, setError] = useState('');
@@ -58,6 +59,7 @@ export function ProductEditorScreen({ navigation, route }: Props) {
         setPrice(String(prod.price));
         setUnit(prod.unit);
         setStock(String(prod.stock));
+        setDeal(String(prod.dealPercent ?? 0));
         setImage(prod.image);
         setIsActive(prod.isActive);
       } else {
@@ -109,6 +111,8 @@ export function ProductEditorScreen({ navigation, route }: Props) {
     if (!unit.trim()) errs.unit = 'Unit required (e.g. "1 packet")';
     const s = Number(stock);
     if (!Number.isFinite(s) || s < 0) errs.stock = 'Enter stock qty';
+    const d = deal.trim() === '' ? 0 : Number(deal);
+    if (!Number.isFinite(d) || d < 0 || d > 90) errs.deal = '0–90 %';
     setFieldError(errs);
     if (Object.keys(errs).length) return;
 
@@ -121,6 +125,7 @@ export function ProductEditorScreen({ navigation, route }: Props) {
         price: p,
         unit: unit.trim(),
         stock: Math.floor(s),
+        dealPercent: Math.floor(d),
         image,
         isActive,
       };
@@ -253,6 +258,16 @@ export function ProductEditorScreen({ navigation, route }: Props) {
                 keyboardType="numeric"
                 placeholder="100"
                 error={fieldError.stock}
+              />
+            </View>
+            <View className="flex-1">
+              <FormField
+                label="Deal % off (0 = none)"
+                value={deal}
+                onChangeText={setDeal}
+                keyboardType="numeric"
+                placeholder="0"
+                error={fieldError.deal}
               />
             </View>
           </View>

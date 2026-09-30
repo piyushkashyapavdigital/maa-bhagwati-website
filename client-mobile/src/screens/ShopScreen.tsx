@@ -1,22 +1,32 @@
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React, { useMemo, useState } from 'react';
+import type { RouteProp } from '@react-navigation/native';
+import React, { useEffect, useMemo, useState } from 'react';
 import { ScrollView, Text, TextInput, View } from 'react-native';
 import { EmptyState } from '../components/EmptyState';
 import { ErrorBanner } from '../components/ErrorBanner';
+import { Footer } from '../components/Footer';
 import { GradientHeader } from '../components/GradientHeader';
 import { LoadingView } from '../components/LoadingView';
 import { ProductCard } from '../components/ProductCard';
 import { Screen } from '../components/Screen';
 import { useShop } from '../shop';
 import { colors } from '../theme';
-import type { RootStackParamList } from '../navigation/types';
+import type { MainTabParamList, RootStackParamList } from '../navigation/types';
+
+type R = RouteProp<MainTabParamList, 'Shop'>;
 
 export function ShopScreen() {
   const nav = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const route = useRoute<R>();
   const { ready, error, categories, products, refresh } = useShop();
-  const [query, setQuery] = useState('');
+  const [query, setQuery] = useState(route.params?.q ?? '');
   const [catFilter, setCatFilter] = useState('');
+
+  // Home search lands here with ?q — pick it up every time.
+  useEffect(() => {
+    if (route.params?.q !== undefined) setQuery(route.params.q);
+  }, [route.params?.q]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -75,6 +85,26 @@ export function ShopScreen() {
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
         {filtered.length === 0 ? (
           <EmptyState title="No samagri found" message="Try another search." />
+        ) : query.trim() ? (
+          // Search mode — horizontal card index with images.
+          <View>
+            <Text className="mb-2 px-1 text-xs font-bold text-muted">
+              {filtered.length} result{filtered.length === 1 ? '' : 's'} for “{query.trim()}”
+            </Text>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              snapToInterval={160}
+              decelerationRate="fast"
+              className="-mx-4 px-4"
+            >
+              {filtered.map((p) => (
+                <View key={p.id} style={{ width: 150 }} className="mr-2.5">
+                  <ProductCard product={p} compact />
+                </View>
+              ))}
+            </ScrollView>
+          </View>
         ) : (
           <View className="flex-row flex-wrap gap-2.5">
             {filtered.map((p) => (
@@ -84,6 +114,7 @@ export function ShopScreen() {
             ))}
           </View>
         )}
+        <Footer />
       </ScrollView>
     </Screen>
   );

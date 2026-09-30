@@ -1,4 +1,5 @@
 import { estimateTotals, validateAddress, type AddressForm } from '../types';
+import { dealOf, dealTagOf, mrpOf } from '../types';
 
 const valid: AddressForm = {
   name: 'Ramkumar Sharma',
@@ -36,8 +37,7 @@ describe('validateAddress', () => {
   });
 });
 
-describe('estimateTotals', () => {
-  it('adds delivery below the free threshold', () => {
+describe('estimateTotals', () => {  it('adds delivery below the free threshold', () => {
     const t = estimateTotals([{ priceSnapshot: 100, quantity: 2 }], 70, 500);
     expect(t).toEqual({ count: 2, subtotal: 200, delivery: 70, total: 270 });
   });
@@ -53,5 +53,27 @@ describe('estimateTotals', () => {
       delivery: 0,
       total: 0,
     });
+  });
+});
+
+describe('deals', () => {
+  const p = (deal_percent: number) => ({
+    id: 'prod-1', name: 'X', slug: 'x', category_id: 'cat-1', image: null,
+    price: 80, unit: '1 pc', reference_quantity: '1 pc', stock: 10,
+    is_active: true, emoji: '', deal_percent,
+  });
+  it('dealOf clamps to 0–90', () => {
+    expect(dealOf(p(20) as never)).toBe(20);
+    expect(dealOf(p(0) as never)).toBe(0);
+    expect(dealOf(p(-5) as never)).toBe(0);
+    expect(dealOf(p(99) as never)).toBe(90);
+  });
+  it('mrpOf derives strikethrough price', () => {
+    expect(mrpOf(p(20) as never)).toBe(100);
+    expect(mrpOf(p(0) as never)).toBe(80);
+  });
+  it('dealTagOf formats the badge', () => {
+    expect(dealTagOf(p(25) as never)).toBe('25% OFF');
+    expect(dealTagOf(p(0) as never)).toBe('');
   });
 });

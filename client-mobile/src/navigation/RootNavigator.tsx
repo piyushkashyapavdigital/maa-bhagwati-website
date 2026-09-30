@@ -25,7 +25,7 @@ const Tab = createBottomTabNavigator<MainTabParamList>();
 
 const TAB_ICONS: Record<keyof MainTabParamList, string> = {
   Home: 'home',
-  Shop: 'storefront',
+  Shop: 'grid-view',
   Cart: 'shopping-cart',
   Orders: 'receipt-long',
   Account: 'person',
@@ -58,7 +58,7 @@ function MainTabs() {
       })}
     >
       <Tab.Screen name="Home" component={HomeScreen} />
-      <Tab.Screen name="Shop" component={ShopScreen} />
+      <Tab.Screen name="Shop" component={ShopScreen} options={{ title: 'Categories' }} />
       <Tab.Screen
         name="Cart"
         component={CartScreen}

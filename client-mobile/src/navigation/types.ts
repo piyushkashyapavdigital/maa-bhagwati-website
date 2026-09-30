@@ -1,13 +1,13 @@
 export type MainTabParamList = {
   Home: undefined;
-  Shop: undefined;
+  Shop: { q?: string } | undefined;
   Cart: undefined;
   Orders: undefined;
   Account: undefined;
 };
 
 export type RootStackParamList = {
-  Main: { screen?: keyof MainTabParamList } | undefined;
+  Main: { screen?: keyof MainTabParamList; params?: object } | undefined;
   Auth: undefined;
   Category: { slug: string };
   Product: { id: string };
