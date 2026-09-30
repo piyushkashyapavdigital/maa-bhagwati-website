@@ -208,59 +208,10 @@ export function HomeScreen() {
           <View className="pt-3 px-4">
             <ErrorBanner message={error} onRetry={refresh} />
 
-            {/* 1. ADMIN BANNERS (home_top) — smooth auto slider, max 10.
-                Falls back to the static hero when none exist. */}
+            {/* 1. ADMIN BANNERS (home_top) — smooth auto slider, max 10. */}
             {topBanners.length > 0 ? (
               <BannerSlider banners={topBanners} onPress={openBanner} />
-            ) : (
-            <View className="mb-4 overflow-hidden rounded-3xl border border-gold/30 bg-white shadow-sm">
-              <LinearGradient
-                colors={['#FFFBEB', '#FEF3C7', '#FDE68A']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                className="p-4"
-              >
-                <View className="flex-row items-center justify-between">
-                  <View className="flex-1 pr-2">
-                    <Text className="text-[9px] font-black uppercase tracking-wider text-maroon/80 mb-1">
-                      PURE • AUTHENTIC • TRUSTED
-                    </Text>
-                    <Text className="text-lg font-black text-maroon leading-snug">
-                      Complete Pooja Samagri for Every Occasion
-                    </Text>
-                    <Text className="mt-1 text-[11px] font-medium text-muted">
-                      Quality Products | Trusted by Devotees
-                    </Text>
-
-                    <Pressable
-                      onPress={() => nav.navigate('Main', { screen: 'Shop' })}
-                      className="mt-3 inline-flex self-start rounded-full bg-maroon px-4 py-2 shadow"
-                    >
-                      <Text className="text-xs font-bold text-white">
-                        Shop Now →
-                      </Text>
-                    </Pressable>
-                  </View>
-
-                  {/* Banner Diya Graphic */}
-                  <View className="h-24 w-24 items-center justify-center rounded-2xl bg-white/60 border border-gold/40 p-2 shadow-inner">
-                    <Text className="text-5xl">🪔</Text>
-                    <Text className="text-[9px] font-bold text-gold-dark mt-1 text-center">
-                      Shubh Pooja Always
-                    </Text>
-                  </View>
-                </View>
-
-                {/* Banner Pagination Dots */}
-                <View className="mt-3 flex-row items-center justify-center gap-1.5">
-                  <View className="h-1.5 w-1.5 rounded-full bg-maroon/30" />
-                  <View className="h-1.5 w-1.5 rounded-full bg-maroon/30" />
-                  <View className="h-2 w-4 rounded-full bg-maroon" />
-                  <View className="h-1.5 w-1.5 rounded-full bg-maroon/30" />
-                </View>
-              </LinearGradient>
-            </View>
-            )}
+            ) : null}
 
             {/* 2. TOP QUICK CATEGORY CIRCLES (ONLY 4 CATEGORIES) */}
             <View className="mb-5">

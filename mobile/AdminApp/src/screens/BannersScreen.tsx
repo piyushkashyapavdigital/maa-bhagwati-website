@@ -40,6 +40,8 @@ export function BannersScreen() {
   const [newLink, setNewLink] = useState('');
   const [newPlacement, setNewPlacement] = useState<string>('home_top');
   const [linkCats, setLinkCats] = useState<DBCategory[]>([]);
+  // Measured aspect (w/h) of the picked banner. Ideal ≈ 2.6 (2017×780).
+  const [imgRatio, setImgRatio] = useState<number | null>(null);
   const [saving, setSaving] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState<DBBanner | null>(null);
 
@@ -84,6 +86,16 @@ export function BannersScreen() {
       };
       const up = await api.upload<{ path: string }>('/api/admin/upload', file);
       setNewImage(up.path);
+      // Measure the real ratio so we can warn before a bad crop goes live.
+      const uri = resolveImage(up.path);
+      setImgRatio(null);
+      if (uri) {
+        Image.getSize(
+          uri,
+          (w, h) => setImgRatio(h > 0 ? w / h : null),
+          () => setImgRatio(null),
+        );
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Upload failed');
     } finally {
@@ -110,6 +122,7 @@ export function BannersScreen() {
       setNewTitle('');
       setNewLink('');
       setNewPlacement('home_top');
+      setImgRatio(null);
       load();
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Save failed');
@@ -173,7 +186,11 @@ export function BannersScreen() {
         onBack={() => nav.goBack()}
         right={
           <Pressable
-            onPress={() => setCreating(true)}
+            onPress={() => {
+              setNewImage(null);
+              setImgRatio(null);
+              setCreating(true);
+            }}
             className="h-10 w-10 items-center justify-center rounded-full bg-gold"
             accessibilityLabel="Add banner"
           >
@@ -251,19 +268,32 @@ export function BannersScreen() {
             <Text className="mb-3 text-lg font-extrabold text-maroon">New banner</Text>
             <Pressable
               onPress={pickImage}
-              className="mb-4 items-center rounded-2xl border-2 border-dashed border-line bg-cream p-5"
+              className="mb-2 items-center overflow-hidden rounded-2xl border-2 border-dashed border-line bg-cream"
             >
               {newImage ? (
-                <ZoomableImage source={{ uri: resolveImage(newImage) ?? '' }} style={{ width: '100%', height: 100 }} />
+                <View style={{ width: '100%', height: 150 }}>
+                  <ZoomableImage source={{ uri: resolveImage(newImage) ?? '' }} style={{ width: '100%', height: 150 }} />
+                </View>
               ) : (
-                <>
-                  <Text className="text-3xl" />
+                <View className="items-center p-5">
+                  <Text className="text-3xl">🖼️</Text>
                   <Text className="mt-2 text-sm font-bold text-maroon">
-                    {uploading ? 'Uploading' : 'Tap to choose image'}
+                    {uploading ? 'Uploading…' : 'Tap to choose image'}
                   </Text>
-                </>
+                  <Text className="mt-1 text-center text-[11px] text-muted">
+                    Wide works best — ideal 2017×780
+                  </Text>
+                </View>
               )}
             </Pressable>
+            {newImage && imgRatio !== null && imgRatio < 1.9 ? (
+              <View className="mb-3 rounded-xl border border-mango/50 bg-mango/10 px-3 py-2">
+                <Text className="text-[11px] font-bold text-mango">
+                  ⚠️ Quite square/tall ({imgRatio.toFixed(1)}:1, ideal 2.6:1) —
+                  sides will crop on the app. A wider image looks best.
+                </Text>
+              </View>
+            ) : null}
             <TextInput
               value={newTitle}
               onChangeText={setNewTitle}
