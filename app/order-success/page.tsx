@@ -40,6 +40,7 @@ interface SavedOrder {
 function SuccessContent() {
   const searchParams = useSearchParams();
   const paymentId = searchParams.get("payment_id");
+  const isCod = searchParams.get("method") === "cod";
   const [order, setOrder] = useState<SavedOrder | null>(null);
 
   useEffect(() => {
@@ -59,14 +60,14 @@ function SuccessContent() {
             <span className="text-3xl">✅</span>
           </div>
           <h1 className="text-xl sm:text-2xl font-extrabold text-white mb-1">
-            ऑर्डर सफलतापूर्वक प्राप्त हुआ!
+            {isCod ? "ऑर्डर मिल गया! 🙏" : "ऑर्डर सफलतापूर्वक प्राप्त हुआ!"}
           </h1>
           <p className="text-white/80 text-sm">
-            Order Confirmed · धन्यवाद 🙏
+            {isCod ? "Cash on Delivery · डिलीवरी पर भुगतान करें 💵" : "Order Confirmed · धन्यवाद 🙏"}
           </p>
           {paymentId && (
             <p className="text-[#E5C07B] text-xs font-mono mt-2">
-              Payment ID: {paymentId}
+              {isCod ? `Order ID: ${paymentId}` : `Payment ID: ${paymentId}`}
             </p>
           )}
         </div>

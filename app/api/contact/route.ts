@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import fs from "node:fs";
 import path from "node:path";
+import { ADMIN_TOPIC, sendPush } from "@/lib/push";
 
 const MSG_FILE = path.join(process.cwd(), "data", "contact-messages.json");
 
@@ -38,6 +39,10 @@ export async function POST(request: NextRequest) {
     fs.mkdirSync(path.dirname(MSG_FILE), { recursive: true });
     fs.writeFileSync(MSG_FILE, JSON.stringify(messages, null, 2), "utf-8");
 
+    await sendPush(ADMIN_TOPIC, "New message 💬", `${name} · ${phone}`, {
+      type: "message",
+      id: `msg-${Date.now()}`,
+    });
     return NextResponse.json({ success: true });
   } catch (err) {
     console.error("Contact form error:", err);

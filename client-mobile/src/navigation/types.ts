@@ -12,7 +12,7 @@ export type RootStackParamList = {
   Category: { slug: string };
   Product: { id: string };
   Checkout: undefined;
-  OrderSuccess: { paymentId: string; orderId: string; total: number };
+  OrderSuccess: { paymentId: string; orderId: string; total: number; method: 'razorpay' | 'cod' };
   OrderDetail: { id: string };
   Contact: undefined;
 };

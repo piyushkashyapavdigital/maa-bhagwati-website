@@ -82,21 +82,29 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
 export const api = {
   catalog: () =>
     request<{ categories: Category[]; products: Product[] }>('/api/catalog'),
-  quote: (items: QuoteLine[]) =>
+  quote: (items: QuoteLine[], lat?: number | null, lng?: number | null) =>
     request<CartQuote>('/api/quote', {
       method: 'POST',
-      body: JSON.stringify({ items }),
+      body: JSON.stringify({ items, lat, lng }),
     }),
-  createRzpOrder: (customer: AddressForm, items: QuoteLine[]) =>
-    request<{ id: string; amount: number; currency: string; quote: CartQuote }>(
+  createRzpOrder: (
+    customer: AddressForm,
+    items: QuoteLine[],
+    paymentMethod?: 'razorpay' | 'cod',
+    lat?: number | null,
+    lng?: number | null,
+  ) =>
+    request<{ id: string; amount: number; currency: string; cod?: boolean; quote: CartQuote }>(
       '/api/client/create-order',
-      { method: 'POST', body: JSON.stringify({ customer, items }) },
+      { method: 'POST', body: JSON.stringify({ customer, items, paymentMethod, lat, lng }) },
     ),
   verifyPayment: (payload: {
     razorpay_order_id: string;
     razorpay_payment_id: string;
     razorpay_signature: string;
     items: QuoteLine[];
+    lat?: number | null;
+    lng?: number | null;
   }) =>
     request<{ success: boolean; paymentId: string; orderId: string }>(
       '/api/razorpay/verify',

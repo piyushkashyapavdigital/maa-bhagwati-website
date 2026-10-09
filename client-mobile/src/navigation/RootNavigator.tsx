@@ -1,11 +1,23 @@
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { NavigationContainer } from '@react-navigation/native';
+import {
+  NavigationContainer,
+  createNavigationContainerRef,
+} from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import React from 'react';
+import React, { useEffect } from 'react';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useAuth } from '../auth';
 import { useCart } from '../cart';
 import { colors } from '../theme';
+import { PushBanner } from '../components/PushBanner';
+import {
+  initialPushOpen,
+  onPushOpened,
+  registerCustomerPush,
+  watchForegroundPush,
+  type PushEvent,
+} from '../push';
 import { AccountScreen } from '../screens/AccountScreen';
 import { AuthScreen } from '../screens/AuthScreen';
 import { CartScreen } from '../screens/CartScreen';
@@ -70,9 +82,40 @@ function MainTabs() {
   );
 }
 
+export const navigationRef =
+  createNavigationContainerRef<RootStackParamList>();
+
+function openPush(e: PushEvent) {
+  if (!navigationRef.isReady()) return;
+  if (e.type === 'order' && e.id) {
+    navigationRef.navigate('OrderDetail', { id: e.id });
+  } else {
+    navigationRef.navigate('Main', { screen: 'Orders' });
+  }
+}
+
 export function RootStack() {
+  const { user } = useAuth();
+
+  useEffect(() => {
+    registerCustomerPush(user?.id ?? null);
+  }, [user?.id]);
+
+  useEffect(() => {
+    const off = watchForegroundPush();
+    initialPushOpen().then((e) => {
+      if (e) setTimeout(() => openPush(e), 800);
+    });
+    const opened = onPushOpened(openPush);
+    return () => {
+      off();
+      opened();
+    };
+  }, []);
+
   return (
-    <NavigationContainer>
+    <NavigationContainer ref={navigationRef}>
+      <PushBanner onOpen={openPush} />
       <Stack.Navigator
         screenOptions={{ headerShown: false, animation: 'slide_from_right' }}
       >

@@ -1,19 +1,18 @@
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React, { useMemo, useState } from 'react';
-import { ScrollView, Text, View } from 'react-native';
-import RazorpayCheckout from 'react-native-razorpay';
+import Geolocation from '@react-native-community/geolocation';
+import React, { useEffect, useMemo, useState } from 'react';
+import { PermissionsAndroid, Platform, ScrollView, Text, View } from 'react-native';
 import { api } from '../api';
 import { useAuth } from '../auth';
 import { useCart } from '../cart';
-import { RAZORPAY_KEY_ID } from '../config';
 import { ErrorBanner } from '../components/ErrorBanner';
 import { FormField } from '../components/FormField';
 import { GradientHeader } from '../components/GradientHeader';
 import { PrimaryButton } from '../components/PrimaryButton';
 import { Screen } from '../components/Screen';
-import { INR, colors } from '../theme';
-import type { AddressForm } from '../types';
+import { INR } from '../theme';
+import type { AddressForm, CartQuote } from '../types';
 import { validateAddress } from '../types';
 import type { RootStackParamList } from '../navigation/types';
 
@@ -30,6 +29,32 @@ const EMPTY: AddressForm = {
   notes: '',
 };
 
+async function ensureLocationPermission(): Promise<boolean> {
+  if (Platform.OS !== 'android') return true;
+  try {
+    const res = await PermissionsAndroid.request(
+      PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+    );
+    return res === PermissionsAndroid.RESULTS.GRANTED;
+  } catch {
+    return false;
+  }
+}
+
+function getPosition(): Promise<{ lat: number; lng: number } | null> {
+  return new Promise((resolve) => {
+    try {
+      Geolocation.getCurrentPosition(
+        (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+        () => resolve(null),
+        { enableHighAccuracy: false, timeout: 8000, maximumAge: 60000 },
+      );
+    } catch {
+      resolve(null);
+    }
+  });
+}
+
 export function CheckoutScreen() {
   const nav = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { items, subtotal, count, clear } = useCart();
@@ -41,11 +66,30 @@ export function CheckoutScreen() {
   const [errors, setErrors] = useState<Partial<AddressForm>>({});
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const payMethod = 'cod' as const;
+  const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const [serverQuote, setServerQuote] = useState<CartQuote | null>(null);
 
   const lines = useMemo(
     () => items.map((i) => ({ productId: i.productId, quantity: i.quantity })),
     [items],
   );
+
+  // GPS for the 2 km free-delivery rule + authoritative server quote.
+  useEffect(() => {
+    (async () => {
+      const ok = await ensureLocationPermission();
+      const pos = ok ? await getPosition() : null;
+      if (pos) setCoords(pos);
+      try {
+        const q = await api.quote(lines, pos?.lat ?? null, pos?.lng ?? null);
+        setServerQuote(q);
+      } catch {
+        // offline estimate stays
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   if (items.length === 0) {
     return (
@@ -65,54 +109,31 @@ export function CheckoutScreen() {
     setErrors((e) => ({ ...e, [k]: undefined }));
   };
 
+  const shownSubtotal = serverQuote?.subtotal ?? subtotal;
+  const shownDelivery = serverQuote?.deliveryCharge ?? (subtotal === 0 ? 0 : 70);
+  const shownTotal = serverQuote?.total ?? subtotal + shownDelivery;
+
   const pay = async () => {
     const errs = validateAddress(form);
     setErrors(errs);
     if (Object.keys(errs).length > 0) return;
     setBusy(true);
     setError('');
+    const loc = coords ? { lat: coords.lat, lng: coords.lng } : { lat: null, lng: null };
     try {
-      // 1. Server creates the Razorpay order (server re-prices the cart)
-      const order = await api.createRzpOrder(form, lines);
-      const serverTotal = order.amount / 100;
-
-      // 2. Native Razorpay sheet — no browser involved
-      const res = await RazorpayCheckout.open({
-        key: RAZORPAY_KEY_ID,
-        amount: order.amount,
-        currency: order.currency,
-        name: 'Maa Bhagwati Pooja Bhandar',
-        description: `Order of ${count} item(s)`,
-        order_id: order.id,
-        prefill: { name: form.name, contact: form.phone, email: form.email },
-        notes: {
-          address: `${form.address1}, ${form.address2}, ${form.city}, ${form.state} - ${form.pincode}`,
-        },
-        theme: { color: '#6B1D1D' },
-      });
-
-      // 3. Verify signature on the server
-      const verify = await api.verifyPayment({
-        razorpay_order_id: res.razorpay_order_id,
-        razorpay_payment_id: res.razorpay_payment_id,
-        razorpay_signature: res.razorpay_signature,
-        items: lines,
-      });
-
+      // Cash on Delivery only — order goes live immediately as Pending,
+      // admin gets the push.
+      const order = await api.createRzpOrder(form, lines, 'cod', loc.lat, loc.lng);
       clear();
       nav.replace('OrderSuccess', {
-        paymentId: verify.paymentId,
-        orderId: verify.orderId,
-        total: serverTotal,
+        paymentId: order.id,
+        orderId: order.id,
+        total: order.quote?.total ?? shownTotal,
+        method: 'cod',
       });
+      return;
     } catch (e: unknown) {
-      // Razorpay rejects with { code, description } on failure/dismiss.
-      const msg =
-        e instanceof Error
-          ? e.message
-          : typeof e === 'object' && e !== null && 'description' in e
-            ? String((e as { description: unknown }).description)
-            : 'Payment failed. Please try again.';
+      const msg = e instanceof Error ? e.message : 'Order failed. Please try again.';
       setError(msg);
       setBusy(false);
     }
@@ -153,17 +174,41 @@ export function CheckoutScreen() {
         <FormField label="Nearby Landmark (optional)" value={form.landmark} onChangeText={(v) => set('landmark', v)} placeholder="Near Shiv Mandir" />
         <FormField label="Note (optional)" value={form.notes} onChangeText={(v) => set('notes', v)} placeholder="Deliver after 2 PM" />
 
-        <View className="mb-4 rounded-2xl border border-line bg-white p-4">
+        <Text className="mb-2 mt-2 px-1 text-sm font-extrabold uppercase tracking-wide text-maroon">
+          3 · Payment
+        </Text>
+        <View className="mb-3 rounded-2xl border-2 border-maroon bg-white p-4">
           <Text className="text-sm font-extrabold text-ink">
-            🔒 Razorpay — UPI · Cards · NetBanking
+            💵 Cash on Delivery
           </Text>
           <Text className="mt-1 text-xs text-muted">
-            Subtotal {INR(subtotal)} · pay securely in the next step.
+            Pay cash when your order arrives. No advance needed.
+          </Text>
+        </View>
+
+        <View className="mb-4 rounded-2xl border border-line bg-white p-4">
+          <Text className="text-sm font-extrabold text-ink">
+            💵 Cash on Delivery — pay when it arrives
+          </Text>
+          <Text className="mt-1 text-xs text-muted">
+            {coords ? (
+              <>
+                📍 {serverQuote?.distanceKm != null
+                  ? `${serverQuote.distanceKm.toFixed(1)} km away — `
+                  : ''}
+                {serverQuote && serverQuote.freeDelivery
+                  ? 'FREE delivery within 2 km 🎉'
+                  : `₹${shownDelivery} delivery`}
+              </>
+            ) : (
+              '📍 Location off — ₹70 delivery applies.'
+            )}
+            {' '}· Total {INR(shownTotal)}
           </Text>
         </View>
 
         <PrimaryButton
-          title={busy ? 'Processing…' : `Pay securely`}
+          title={busy ? 'Processing…' : `Place order · ${INR(shownTotal)}`}
           loading={busy}
           onPress={pay}
         />

@@ -250,6 +250,8 @@ export function normalizeOrder(r: any): any {
     payment_id: r.payment_id ?? r.paymentId,
     date: r.date,
     status: r.status ?? "Pending",
+    paymentMethod: r.payment_method ?? r.paymentMethod ?? "Online",
+    payment_method: r.payment_method ?? r.paymentMethod ?? "Online",
     customer,
     items: r.items ?? [],
     subtotal: r.subtotal ?? 0,
@@ -271,6 +273,7 @@ function orderToRow(data: any): any {
     rzp_order_id: data.rzp_order_id ?? data.rzpOrderId ?? data.id,
     date: data.date ?? new Date().toISOString(),
     status: data.status ?? "Pending",
+    payment_method: data.payment_method ?? data.paymentMethod ?? "Online",
     customer_name: c.name ?? data.customer_name,
     customer_phone: c.phone ?? data.customer_phone,
     customer_email: c.email ?? data.customer_email,
@@ -786,10 +789,61 @@ export interface CartQuote {
   subtotal: number;
   deliveryCharge: number;
   total: number;
+  distanceKm: number | null;
+  freeDelivery: boolean;
+}
+
+// ── Delivery (distance-based) ─────────────────────────
+// Shop location (Gugga Mari, Singh pura, Punjab)
+export const STORE_LAT = 30.6297911;
+export const STORE_LNG = 76.8155835;
+// Free home delivery within this radius; flat charge beyond it.
+export const FREE_DELIVERY_RADIUS_KM = 2;
+export const DELIVERY_CHARGE = 70;
+
+/** Great-circle distance in km between two lat/lng points. */
+export function haversineKm(
+  lat1: number,
+  lng1: number,
+  lat2: number,
+  lng2: number
+): number {
+  const toRad = (d: number) => (d * Math.PI) / 180;
+  const R = 6371;
+  const a =
+    Math.sin(toRad(lat2 - lat1) / 2) ** 2 +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(toRad(lng2 - lng1) / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(a));
+}
+
+/** Delivery quote from an optional customer position. No position (or GPS
+ *  denied) → charged delivery, order still allowed. */
+export function deliveryFor(
+  subtotal: number,
+  lat?: number | null,
+  lng?: number | null
+): { deliveryCharge: number; distanceKm: number | null; freeDelivery: boolean } {
+  if (subtotal === 0) return { deliveryCharge: 0, distanceKm: null, freeDelivery: true };
+  let distanceKm: number | null = null;
+  if (
+    typeof lat === "number" &&
+    typeof lng === "number" &&
+    Number.isFinite(lat) &&
+    Number.isFinite(lng)
+  ) {
+    distanceKm = haversineKm(STORE_LAT, STORE_LNG, lat, lng);
+  }
+  const freeDelivery = distanceKm !== null && distanceKm <= FREE_DELIVERY_RADIUS_KM;
+  return {
+    deliveryCharge: freeDelivery ? 0 : DELIVERY_CHARGE,
+    distanceKm,
+    freeDelivery,
+  };
 }
 
 export async function quoteCart(
-  input: { productId: string; quantity: number }[]
+  input: { productId: string; quantity: number }[],
+  opts?: { lat?: number | null; lng?: number | null }
 ): Promise<CartQuote> {
   const products = await getAllProducts();
   const categories = await getCategories();
@@ -823,11 +877,13 @@ export async function quoteCart(
 
   const subtotal = items.reduce((s, i) => s + i.lineTotal, 0);
   const itemCount = items.reduce((s, i) => s + i.quantity, 0);
-  const DELIVERY_CHARGE = 70;
-  const FREE_DELIVERY_ABOVE = 500;
-  const deliveryCharge = subtotal === 0 || subtotal >= FREE_DELIVERY_ABOVE ? 0 : DELIVERY_CHARGE;
+  const { deliveryCharge, distanceKm, freeDelivery } = deliveryFor(
+    subtotal,
+    opts?.lat,
+    opts?.lng
+  );
 
-  return { items, itemCount, subtotal, deliveryCharge, total: subtotal + deliveryCharge };
+  return { items, itemCount, subtotal, deliveryCharge, total: subtotal + deliveryCharge, distanceKm, freeDelivery };
 }
 
 export async function getCatalog() {

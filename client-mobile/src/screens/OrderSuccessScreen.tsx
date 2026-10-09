@@ -26,11 +26,20 @@ export function OrderSuccessScreen() {
           <Text className="text-5xl">✅</Text>
         </View>
         <Text className="mt-5 text-center text-xl font-extrabold text-ink">
-          Payment successful!
+          {params.method === 'cod' ? 'Order mil gaya! 🙏' : 'Payment successful!'}
         </Text>
         <Text className="mt-2 text-center text-sm leading-6 text-muted">
-          Amount paid: {INR(params.total)}{'\n'}
-          Payment ID: {params.paymentId}
+          {params.method === 'cod' ? (
+            <>
+              Pay {INR(params.total)} cash on delivery 💵{'\n'}
+              Order ID: {params.orderId}
+            </>
+          ) : (
+            <>
+              Amount paid: {INR(params.total)}{'\n'}
+              Payment ID: {params.paymentId}
+            </>
+          )}
         </Text>
         <View className="mt-8 w-full gap-3">
           <PrimaryButton

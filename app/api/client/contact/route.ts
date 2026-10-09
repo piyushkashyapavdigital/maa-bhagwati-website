@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
+import { ADMIN_TOPIC, sendPush } from "@/lib/push";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -23,6 +24,10 @@ export async function POST(req: NextRequest) {
       read: false,
     });
     if (error) throw error;
+    await sendPush(ADMIN_TOPIC, "New message 💬", `${name} · ${phone}`, {
+      type: "message",
+      id: `msg-${Date.now()}`,
+    });
     return NextResponse.json({ success: true });
   } catch (err) {
     console.error("Client contact error:", err);

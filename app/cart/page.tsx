@@ -7,7 +7,7 @@ import Header from "@/components/Header";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { useCart } from "@/context/CartContext";
-import { DELIVERY_CHARGE, FREE_DELIVERY_ABOVE } from "@/lib/pricing";
+import { DELIVERY_CHARGE } from "@/lib/pricing";
 
 export default function CartPage() {
   const {
@@ -20,8 +20,9 @@ export default function CartPage() {
     clearCart,
   } = useCart();
 
-  const deliveryCharge =
-    totalAmount === 0 || totalAmount >= FREE_DELIVERY_ABOVE ? 0 : DELIVERY_CHARGE;
+  // Estimate only: server re-quotes at checkout (FREE within 2 km).
+  // We show the charged amount here so checkout can only get cheaper.
+  const deliveryCharge = totalAmount === 0 ? 0 : DELIVERY_CHARGE;
   const grandTotal = totalAmount + deliveryCharge;
 
   // Group items by category for a tidy review
@@ -158,7 +159,7 @@ export default function CartPage() {
                 </div>
                 {deliveryCharge > 0 && (
                   <p className="text-[10px] text-[#948177] italic">
-                    Add ₹{(FREE_DELIVERY_ABOVE - totalAmount).toLocaleString("en-IN")} more for free delivery
+                    FREE delivery within 2 km of our shop — allow location at checkout
                   </p>
                 )}
                 <div className="border-t border-[#FAF5EF] pt-2 flex justify-between text-sm font-extrabold text-[#2C1B17]">

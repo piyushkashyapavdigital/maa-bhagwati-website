@@ -84,6 +84,8 @@ export interface CartQuote {
   subtotal: number;
   deliveryCharge: number;
   total: number;
+  distanceKm: number | null;
+  freeDelivery: boolean;
 }
 
 export interface AddressForm {
@@ -141,14 +143,14 @@ export function validateAddress(f: AddressForm): Partial<AddressForm> {
   return e;
 }
 
-/** Display-only cart math. Server /api/quote is authoritative. */
+/** Display-only cart math. Server /api/quote is authoritative
+ *  (FREE within 2 km with GPS; this estimate assumes charged delivery). */
 export function estimateTotals(
   items: { priceSnapshot: number; quantity: number }[],
   deliveryCharge = 70,
-  freeAbove = 500,
 ): { count: number; subtotal: number; delivery: number; total: number } {
   const subtotal = items.reduce((s, i) => s + i.priceSnapshot * i.quantity, 0);
   const count = items.reduce((s, i) => s + i.quantity, 0);
-  const delivery = subtotal === 0 || subtotal >= freeAbove ? 0 : deliveryCharge;
+  const delivery = subtotal === 0 ? 0 : deliveryCharge;
   return { count, subtotal, delivery, total: subtotal + delivery };
 }

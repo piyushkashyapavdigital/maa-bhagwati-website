@@ -9,7 +9,7 @@ import { GradientHeader } from '../components/GradientHeader';
 import { PrimaryButton } from '../components/PrimaryButton';
 import { Screen } from '../components/Screen';
 import { Thumb } from '../components/Thumb';
-import { DELIVERY_CHARGE, FREE_DELIVERY_ABOVE } from '../config';
+import { DELIVERY_CHARGE } from '../config';
 import { INR, colors } from '../theme';
 import type { RootStackParamList } from '../navigation/types';
 
@@ -17,8 +17,8 @@ export function CartScreen() {
   const nav = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { items, increase, decrease, remove, subtotal, count } = useCart();
 
-  const delivery =
-    subtotal === 0 || subtotal >= FREE_DELIVERY_ABOVE ? 0 : DELIVERY_CHARGE;
+  // Estimate only — checkout re-quotes with GPS (FREE within 2 km).
+  const delivery = subtotal === 0 ? 0 : DELIVERY_CHARGE;
 
   return (
     <Screen>

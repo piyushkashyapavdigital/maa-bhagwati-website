@@ -460,7 +460,7 @@ export function HomeScreen() {
             {/* FREE DELIVERY NOTICE */}
             <View className="mt-4 items-center rounded-2xl bg-cream border border-line/60 p-3.5">
               <Text className="text-xs font-medium text-muted">
-                Free delivery above {INR(500)} · 🚚 ₹70 below
+                Free delivery within 2 km 🛵 · 🚚 ₹70 beyond
               </Text>
             </View>
 

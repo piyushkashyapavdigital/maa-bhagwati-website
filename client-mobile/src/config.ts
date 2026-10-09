@@ -13,17 +13,17 @@ export const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiO
 export const RAZORPAY_KEY_ID = 'rzp_test_TdO22IAoPMkRO5';
 
 // Display-only estimate. The server re-quotes authoritatively at checkout
-// (see /api/quote) — these must match lib/db.ts quoteCart.
+// (see /api/quote) — free within 2 km of the shop, flat charge beyond.
 export const DELIVERY_CHARGE = 70;
-export const FREE_DELIVERY_ABOVE = 500;
+export const FREE_DELIVERY_RADIUS_KM = 2;
 
 // ── In-app updates ───────────────────────────────────────
 // New APKs are hosted in Supabase Storage (public bucket `app-updates`)
 // next to a version.json. The app checks on launch and pops an
 // "Update available" dialog. Bump APP_VERSION_CODE together with
 // android versionCode on every release build.
-export const APP_VERSION_CODE = 4;
-export const APP_VERSION_NAME = '1.1.1';
+export const APP_VERSION_CODE = 5;
+export const APP_VERSION_NAME = '1.2';
 export const UPDATE_VERSION_URL =
   'https://raw.githubusercontent.com/piyushkashyapavdigital/maa-bhagwati-website/main/updates/client/version.json';
 

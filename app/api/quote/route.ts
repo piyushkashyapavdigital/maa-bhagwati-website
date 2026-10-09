@@ -5,6 +5,8 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const lines = Array.isArray(body?.items) ? body.items : [];
+    const lat = Number(body?.lat);
+    const lng = Number(body?.lng);
 
     const quote = await quoteCart(
       lines
@@ -18,7 +20,11 @@ export async function POST(request: NextRequest) {
         .map((l: { productId: string; quantity: number }) => ({
           productId: l.productId,
           quantity: Number(l.quantity),
-        }))
+        })),
+      {
+        lat: Number.isFinite(lat) ? lat : null,
+        lng: Number.isFinite(lng) ? lng : null,
+      }
     );
 
     return NextResponse.json({ success: true, quote });

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getOrderById, updateOrderStatus } from "@/lib/db";
+import { customerTopic, sendPush } from "@/lib/push";
 
 export async function GET(
   _req: NextRequest,
@@ -21,5 +22,14 @@ export async function PUT(
     return NextResponse.json({ error: "status is required" }, { status: 400 });
   const order = await updateOrderStatus(id, status);
   if (!order) return NextResponse.json({ error: "Order not found" }, { status: 404 });
+  const uid = (order as any)?.user_id;
+  if (uid && status !== "Failed") {
+    await sendPush(
+      customerTopic(uid),
+      `Order ${status} 📦`,
+      `Order ${String(id).slice(-8)} is now ${status}`,
+      { type: "order", id: String(id) }
+    );
+  }
   return NextResponse.json({ success: true, order });
 }

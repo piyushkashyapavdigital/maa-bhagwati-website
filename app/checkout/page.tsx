@@ -61,11 +61,63 @@ export default function CheckoutPage() {
   const [errors, setErrors] = useState<Partial<FormData>>({});
   const [isProcessing, setIsProcessing] = useState(false);
   const [rzpLoaded, setRzpLoaded] = useState(false);
+  const [payMethod, setPayMethod] = useState<"razorpay" | "cod">("cod");
+  const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const [serverQuote, setServerQuote] = useState<{
+    subtotal: number;
+    deliveryCharge: number;
+    total: number;
+    distanceKm: number | null;
+    freeDelivery: boolean;
+  } | null>(null);
 
   // Display-only estimate from priceSnapshots; the server re-quotes
   const deliveryCharge =
     totalAmount === 0 || totalAmount >= FREE_DELIVERY_ABOVE ? 0 : DELIVERY_CHARGE;
   const grandTotal = totalAmount + deliveryCharge;
+
+  // GPS for the 2 km free-delivery rule + authoritative server quote.
+  // Denied/unavailable → server charges standard delivery, order still allowed.
+  useEffect(() => {
+    if (!("geolocation" in navigator)) return;
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const lat = pos.coords.latitude;
+        const lng = pos.coords.longitude;
+        setCoords({ lat, lng });
+        fetch("/api/quote", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            items: cartItems.map((i) => ({ productId: i.productId, quantity: i.quantity })),
+            lat,
+            lng,
+          }),
+        })
+          .then((r) => r.json())
+          .then((d) => {
+            const q = d.quote;
+            if (q) {
+              setServerQuote({
+                subtotal: q.subtotal,
+                deliveryCharge: q.deliveryCharge,
+                total: q.total,
+                distanceKm: q.distanceKm,
+                freeDelivery: q.freeDelivery,
+              });
+            }
+          })
+          .catch(() => {});
+      },
+      () => {},
+      { timeout: 8000 }
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const shownSubtotal = serverQuote?.subtotal ?? totalAmount;
+  const shownDelivery = serverQuote?.deliveryCharge ?? deliveryCharge;
+  const shownTotal = serverQuote?.total ?? grandTotal;
 
   // Load Razorpay checkout.js
   useEffect(() => {
@@ -113,10 +165,6 @@ export default function CheckoutPage() {
 
   const handlePayment = async () => {
     if (!validate()) return;
-    if (!rzpLoaded) {
-      alert("Razorpay failed to load. Please refresh the page.");
-      return;
-    }
 
     setIsProcessing(true);
 
@@ -126,6 +174,53 @@ export default function CheckoutPage() {
       productId: i.productId,
       quantity: i.quantity,
     }));
+    const location = coords ? { lat: coords.lat, lng: coords.lng } : {};
+
+    // ── Cash on Delivery: order goes live immediately as Pending ──
+    if (payMethod === "cod") {
+      try {
+        const codRes = await fetch("/api/razorpay/create-order", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ customer: form, items: cartLines, paymentMethod: "cod", ...location }),
+        });
+        const cod = await codRes.json();
+        if (!codRes.ok || !cod.id) throw new Error(cod.error || "Order creation failed");
+        const savedOrders = JSON.parse(localStorage.getItem("mbpb_orders") || "[]");
+        savedOrders.unshift({
+          id: cod.id,
+          rzpOrderId: cod.id,
+          date: new Date().toISOString(),
+          customer: form,
+          items: cartItems.map((i) => ({
+            id: i.productId,
+            name: i.name,
+            image: i.image,
+            price: i.priceSnapshot,
+            qty: i.quantity,
+          })),
+          subtotal: cod.quote?.subtotal ?? shownSubtotal,
+          deliveryCharge: cod.quote?.deliveryCharge ?? shownDelivery,
+          total: cod.quote?.total ?? shownTotal,
+          status: "Pending",
+          paymentMethod: "COD",
+        });
+        localStorage.setItem("mbpb_orders", JSON.stringify(savedOrders));
+        clearCart();
+        router.push(`/order-success?payment_id=${cod.id}&method=cod`);
+      } catch (err) {
+        console.error("COD error:", err);
+        alert("Something went wrong. Please try again.");
+        setIsProcessing(false);
+      }
+      return;
+    }
+
+    if (!rzpLoaded) {
+      alert("Razorpay failed to load. Please refresh the page.");
+      setIsProcessing(false);
+      return;
+    }
 
     try {
       // Step 1: Create Razorpay order on server (server re-prices the cart)
@@ -135,6 +230,8 @@ export default function CheckoutPage() {
         body: JSON.stringify({
           customer: form,
           items: cartLines,
+          paymentMethod: "razorpay",
+          ...location,
         }),
       });
 
@@ -180,6 +277,7 @@ export default function CheckoutPage() {
               razorpay_payment_id: response.razorpay_payment_id,
               razorpay_signature: response.razorpay_signature,
               items: cartLines,
+              ...location,
             }),
           });
 
@@ -462,17 +560,27 @@ export default function CheckoutPage() {
                 <h2 className="text-base font-extrabold text-[#2C1B17]">Payment Method</h2>
               </div>
 
-              <div className="flex items-center gap-3 p-4 border-2 border-[#6B1D1D] bg-[#FAF5EF] rounded-xl">
-                <div className="w-5 h-5 rounded-full border-4 border-[#6B1D1D] shrink-0" />
+              <button
+                type="button"
+                className="w-full text-left flex items-center gap-3 p-4 border-2 rounded-xl border-[#6B1D1D] bg-[#FAF5EF]"
+              >
+                <div className="w-5 h-5 rounded-full border-4 shrink-0 border-[#6B1D1D]" />
                 <div className="flex-1">
-                  <p className="text-sm font-bold text-[#2C1B17]">Razorpay — Online Payment</p>
+                  <p className="text-sm font-bold text-[#2C1B17]">💵 Cash on Delivery</p>
                   <p className="text-[10px] text-[#7A6458]">
-                    UPI · Credit/Debit Card · Net Banking · Wallets
+                    Pay cash when your order arrives
                   </p>
                 </div>
-              </div>
+              </button>
 
-              <div className="mt-3 flex items-center gap-2 text-[10px] text-[#7A6458]">
+              <div className="mt-3 text-[10px] text-[#7A6458]">
+                {coords ? (
+                  <span>📍 Delivery location detected{serverQuote?.distanceKm != null ? ` (${serverQuote.distanceKm.toFixed(1)} km away)` : ""} — {serverQuote && serverQuote.freeDelivery ? <span className="font-bold text-[#2E7D32]">FREE delivery within 2 km 🎉</span> : "₹70 delivery"}</span>
+                ) : (
+                  <span>📍 Allow location for free 2 km delivery check — otherwise ₹70 delivery applies.</span>
+                )}
+              </div>
+              <div className="mt-2 flex items-center gap-2 text-[10px] text-[#7A6458]">
                 <span>🔒</span>
                 <span>Your payment is protected by 256-bit SSL encryption.</span>
               </div>
@@ -513,18 +621,18 @@ export default function CheckoutPage() {
               <div className="border-t border-[#FAF5EF] pt-3 space-y-2 text-xs text-[#4E3B32]">
                 <div className="flex justify-between">
                   <span>Subtotal</span>
-                  <span className="font-bold">₹{totalAmount.toLocaleString("en-IN")}</span>
+                  <span className="font-bold">₹{shownSubtotal.toLocaleString("en-IN")}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Delivery</span>
-                  <span className={`font-bold ${deliveryCharge === 0 ? "text-[#2E7D32]" : ""}`}>
-                    {deliveryCharge === 0 ? "FREE 🎉" : `₹${deliveryCharge}`}
+                  <span className={`font-bold ${shownDelivery === 0 ? "text-[#2E7D32]" : ""}`}>
+                    {shownDelivery === 0 ? "FREE 🎉" : `₹${shownDelivery}`}
                   </span>
                 </div>
                 <div className="border-t border-[#FAF5EF] pt-2 flex justify-between text-sm font-extrabold text-[#2C1B17]">
                   <span>Total</span>
                   <span className="text-[#6B1D1D] text-base">
-                    ₹{grandTotal.toLocaleString("en-IN")}
+                    ₹{shownTotal.toLocaleString("en-IN")}
                   </span>
                 </div>
               </div>
@@ -533,9 +641,9 @@ export default function CheckoutPage() {
             {/* Pay button */}
             <button
               onClick={handlePayment}
-              disabled={isProcessing || !rzpLoaded}
+              disabled={isProcessing || (payMethod === "razorpay" && !rzpLoaded)}
               className={`w-full py-4 rounded-2xl font-extrabold text-sm shadow-lg transition-all flex items-center justify-center gap-2 ${
-                isProcessing || !rzpLoaded
+                isProcessing || (payMethod === "razorpay" && !rzpLoaded)
                   ? "bg-[#948177] cursor-not-allowed text-white/80"
                   : "bg-[#6B1D1D] hover:bg-[#4E1212] text-white cursor-pointer active:scale-95"
               }`}
@@ -548,10 +656,15 @@ export default function CheckoutPage() {
                   </svg>
                   <span>Processing…</span>
                 </>
+              ) : payMethod === "cod" ? (
+                <>
+                  <span>💵</span>
+                  <span>Place COD Order · ₹{shownTotal.toLocaleString("en-IN")}</span>
+                </>
               ) : (
                 <>
                   <span>🔒</span>
-                  <span>Pay ₹{grandTotal.toLocaleString("en-IN")}</span>
+                  <span>Pay ₹{shownTotal.toLocaleString("en-IN")}</span>
                 </>
               )}
             </button>

@@ -8,7 +8,7 @@ export default function TopAnnouncementBar() {
       <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
         <div className="flex items-center gap-1 font-medium">
           <span className="text-[10px]">🚚</span>
-          <span>Free Home Delivery on orders above ₹999</span>
+          <span>Free Home Delivery within 2 km 🛵</span>
         </div>
 
         <div className="hidden sm:flex items-center gap-1 font-bold text-[#E5C07B] tracking-wide">

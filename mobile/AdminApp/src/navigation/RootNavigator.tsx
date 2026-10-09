@@ -1,7 +1,10 @@
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { NavigationContainer } from '@react-navigation/native';
+import {
+  NavigationContainer,
+  createNavigationContainerRef,
+} from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { AnalyticsScreen } from '../screens/AnalyticsScreen';
@@ -17,7 +20,23 @@ import { ProductEditorScreen } from '../screens/ProductEditorScreen';
 import { ProductsScreen } from '../screens/ProductsScreen';
 import { SettingsScreen } from '../screens/SettingsScreen';
 import { colors } from '../theme';
+import { PushBanner } from '../components/PushBanner';
+import { initialPushOpen, onPushOpened, registerAdminPush, watchForegroundPush, type PushEvent } from '../push';
 import type { RootStackParamList, MainTabParamList } from './types';
+
+export const navigationRef =
+  createNavigationContainerRef<RootStackParamList>();
+
+function openPush(e: PushEvent) {
+  if (!navigationRef.isReady()) return;
+  if (e.type === 'order' && e.id) {
+    navigationRef.navigate('OrderDetail', { id: e.id });
+  } else if (e.type === 'message') {
+    navigationRef.navigate('Messages');
+  } else {
+    navigationRef.navigate('Main', { screen: 'Orders' });
+  }
+}
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 const Tab = createBottomTabNavigator<MainTabParamList>();
@@ -66,8 +85,23 @@ function MainTabs() {
 }
 
 export function RootStack({ authed }: { authed: boolean }) {
+  useEffect(() => {
+    if (!authed) return;
+    registerAdminPush();
+    const off = watchForegroundPush();
+    initialPushOpen().then((e) => {
+      if (e) setTimeout(() => openPush(e), 800);
+    });
+    const opened = onPushOpened(openPush);
+    return () => {
+      off();
+      opened();
+    };
+  }, [authed]);
+
   return (
-    <NavigationContainer>
+    <NavigationContainer ref={navigationRef}>
+      {authed ? <PushBanner onOpen={openPush} /> : null}
       <Stack.Navigator screenOptions={{ headerShown: false, animation: 'slide_from_right' }}>
         {!authed ? (
           <Stack.Screen name="Login" component={LoginScreen} />

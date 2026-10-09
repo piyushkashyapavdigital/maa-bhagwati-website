@@ -28,6 +28,90 @@
         }
       }
     },
+    "@react-native-community/geolocation": {
+      "root": "/home/Kashyap/AV/maa-bhagwati-pooja-bhandar/client-mobile/node_modules/@react-native-community/geolocation",
+      "name": "@react-native-community/geolocation",
+      "platforms": {
+        "ios": {
+          "podspecPath": "/home/Kashyap/AV/maa-bhagwati-pooja-bhandar/client-mobile/node_modules/@react-native-community/geolocation/react-native-geolocation.podspec",
+          "version": "3.4.0",
+          "configurations": [],
+          "scriptPhases": []
+        },
+        "android": {
+          "sourceDir": "/home/Kashyap/AV/maa-bhagwati-pooja-bhandar/client-mobile/node_modules/@react-native-community/geolocation/android",
+          "packageImportPath": "import com.reactnativecommunity.geolocation.GeolocationPackage;",
+          "packageInstance": "new GeolocationPackage()",
+          "buildTypes": [],
+          "libraryName": "RNCGeolocationSpec",
+          "componentDescriptors": [],
+          "cmakeListsPath": "/home/Kashyap/AV/maa-bhagwati-pooja-bhandar/client-mobile/node_modules/@react-native-community/geolocation/android/build/generated/source/codegen/jni/CMakeLists.txt",
+          "cxxModuleCMakeListsModuleName": null,
+          "cxxModuleCMakeListsPath": null,
+          "cxxModuleHeaderName": null,
+          "isPureCxxDependency": false
+        }
+      }
+    },
+    "@react-native-firebase/app": {
+      "root": "/home/Kashyap/AV/maa-bhagwati-pooja-bhandar/client-mobile/node_modules/@react-native-firebase/app",
+      "name": "@react-native-firebase/app",
+      "platforms": {
+        "ios": {
+          "podspecPath": "/home/Kashyap/AV/maa-bhagwati-pooja-bhandar/client-mobile/node_modules/@react-native-firebase/app/RNFBApp.podspec",
+          "version": "26.4.0",
+          "configurations": [],
+          "scriptPhases": [
+            {
+              "name": "[RNFB] Core Configuration",
+              "path": "./ios_config.sh",
+              "execution_position": "after_compile",
+              "input_files": [
+                "$(BUILT_PRODUCTS_DIR)/$(INFOPLIST_PATH)"
+              ]
+            }
+          ]
+        },
+        "android": {
+          "sourceDir": "/home/Kashyap/AV/maa-bhagwati-pooja-bhandar/client-mobile/node_modules/@react-native-firebase/app/android",
+          "packageImportPath": "import io.invertase.firebase.app.ReactNativeFirebaseAppPackage;",
+          "packageInstance": "new ReactNativeFirebaseAppPackage()",
+          "buildTypes": [],
+          "libraryName": "RNFBAppTurboModules",
+          "componentDescriptors": [],
+          "cmakeListsPath": "/home/Kashyap/AV/maa-bhagwati-pooja-bhandar/client-mobile/node_modules/@react-native-firebase/app/android/src/reactnative/java/io/invertase/firebase/app/generated/jni/CMakeLists.txt",
+          "cxxModuleCMakeListsModuleName": null,
+          "cxxModuleCMakeListsPath": null,
+          "cxxModuleHeaderName": null,
+          "isPureCxxDependency": false
+        }
+      }
+    },
+    "@react-native-firebase/messaging": {
+      "root": "/home/Kashyap/AV/maa-bhagwati-pooja-bhandar/client-mobile/node_modules/@react-native-firebase/messaging",
+      "name": "@react-native-firebase/messaging",
+      "platforms": {
+        "ios": {
+          "podspecPath": "/home/Kashyap/AV/maa-bhagwati-pooja-bhandar/client-mobile/node_modules/@react-native-firebase/messaging/RNFBMessaging.podspec",
+          "version": "26.4.0",
+          "configurations": [],
+          "scriptPhases": []
+        },
+        "android": {
+          "sourceDir": "/home/Kashyap/AV/maa-bhagwati-pooja-bhandar/client-mobile/node_modules/@react-native-firebase/messaging/android",
+          "packageImportPath": "import io.invertase.firebase.messaging.ReactNativeFirebaseMessagingPackage;",
+          "packageInstance": "new ReactNativeFirebaseMessagingPackage()",
+          "buildTypes": [],
+          "libraryName": "RNFBMessagingTurboModules",
+          "componentDescriptors": [],
+          "cmakeListsPath": "/home/Kashyap/AV/maa-bhagwati-pooja-bhandar/client-mobile/node_modules/@react-native-firebase/messaging/android/src/main/java/io/invertase/firebase/messaging/generated/jni/CMakeLists.txt",
+          "cxxModuleCMakeListsModuleName": null,
+          "cxxModuleCMakeListsPath": null,
+          "cxxModuleHeaderName": null,
+          "isPureCxxDependency": false
+        }
+      }
+    },
     "react-native-blob-util": {
       "root": "/home/Kashyap/AV/maa-bhagwati-pooja-bhandar/client-mobile/node_modules/react-native-blob-util",
       "name": "react-native-blob-util",

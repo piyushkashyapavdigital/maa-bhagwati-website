@@ -37,17 +37,18 @@ describe('validateAddress', () => {
   });
 });
 
-describe('estimateTotals', () => {  it('adds delivery below the free threshold', () => {
-    const t = estimateTotals([{ priceSnapshot: 100, quantity: 2 }], 70, 500);
+describe('estimateTotals', () => {
+  it('adds delivery (server may zero it within 2 km)', () => {
+    const t = estimateTotals([{ priceSnapshot: 100, quantity: 2 }], 70);
     expect(t).toEqual({ count: 2, subtotal: 200, delivery: 70, total: 270 });
   });
-  it('gives free delivery at/above threshold', () => {
-    const t = estimateTotals([{ priceSnapshot: 250, quantity: 2 }], 70, 500);
-    expect(t.delivery).toBe(0);
-    expect(t.total).toBe(500);
+  it('charges delivery even on big carts (estimate side)', () => {
+    const t = estimateTotals([{ priceSnapshot: 250, quantity: 2 }], 70);
+    expect(t.delivery).toBe(70);
+    expect(t.total).toBe(570);
   });
   it('is zero for an empty cart', () => {
-    expect(estimateTotals([], 70, 500)).toEqual({
+    expect(estimateTotals([], 70)).toEqual({
       count: 0,
       subtotal: 0,
       delivery: 0,
