@@ -22,8 +22,8 @@ export const FREE_DELIVERY_RADIUS_KM = 2;
 // next to a version.json. The app checks on launch and pops an
 // "Update available" dialog. Bump APP_VERSION_CODE together with
 // android versionCode on every release build.
-export const APP_VERSION_CODE = 7;
-export const APP_VERSION_NAME = '1.2.2';
+export const APP_VERSION_CODE = 8;
+export const APP_VERSION_NAME = '1.2.3';
 export const UPDATE_VERSION_URL =
   'https://raw.githubusercontent.com/piyushkashyapavdigital/maa-bhagwati-website/main/updates/client/version.json';
 

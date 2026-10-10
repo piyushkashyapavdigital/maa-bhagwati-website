@@ -3,7 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import ReactNativeBlobUtil from 'react-native-blob-util';
 
 // Bump together with android versionCode on every admin release build.
-export const ADMIN_APP_VERSION_CODE = 5;
+export const ADMIN_APP_VERSION_CODE = 6;
 export const ADMIN_UPDATE_VERSION_URL =
   'https://raw.githubusercontent.com/piyushkashyapavdigital/maa-bhagwati-website/main/updates/admin/version.json';
 

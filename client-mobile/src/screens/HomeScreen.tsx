@@ -173,7 +173,7 @@ export function HomeScreen() {
           <View className="flex-row items-center gap-2">
             <View className="h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-white border border-gold/40">
               <Image
-                source={require('../assets/logo.png')}
+                source={require('../../assets/logo.png')}
                 style={{ width: 30, height: 30 }}
                 resizeMode="contain"
               />
@@ -253,28 +253,32 @@ export function HomeScreen() {
                   <SmoothPressable
                     key={c.id}
                     onPress={() => nav.navigate('Category', { slug: c.slug })}
-                    className="items-center"
-                    style={{ width: '23%' }}
+                    className="items-center overflow-hidden rounded-2xl border border-line/60 bg-maroon"
+                    style={{ width: '23%', aspectRatio: 1 }}
                   >
-                    <View className="mb-1.5 h-16 w-16 items-center justify-center overflow-hidden rounded-2xl border border-line bg-cream">
-                      {catCover.get(c.id) ? (
-                        <Image
-                          source={{ uri: catCover.get(c.id)! }}
-                          className="h-full w-full"
-                          resizeMode="cover"
-                        />
-                      ) : (
-                        <Text className="text-2xl">
-                          {(CATEGORY_META[c.slug] || { icon: '🪔' }).icon}
-                        </Text>
-                      )}
-                    </View>
-                    <Text
-                      className="text-[11px] font-extrabold text-center text-ink leading-tight"
-                      numberOfLines={2}
+                    {catCover.get(c.id) ? (
+                      <Image
+                        source={{ uri: catCover.get(c.id)! }}
+                        className="absolute h-full w-full"
+                        resizeMode="cover"
+                      />
+                    ) : (
+                      <View className="absolute h-full w-full items-center justify-center bg-maroon">
+                        <Text className="text-3xl">🪔</Text>
+                      </View>
+                    )}
+                    <LinearGradient
+                      colors={['transparent', 'rgba(0,0,0,0.75)']}
+                      className="absolute bottom-0 left-0 right-0 justify-end p-1.5"
+                      style={{ height: '55%' }}
                     >
-                      {c.name}
-                    </Text>
+                      <Text
+                        className="text-[10px] font-extrabold text-white leading-tight"
+                        numberOfLines={2}
+                      >
+                        {c.name}
+                      </Text>
+                    </LinearGradient>
                   </SmoothPressable>
                 ))}
               </View>
@@ -393,27 +397,32 @@ export function HomeScreen() {
                     <SmoothPressable
                       key={c.id}
                       onPress={() => nav.navigate('Category', { slug: c.slug })}
-                      className="w-[48%] rounded-2xl border border-line/80 bg-white p-3 shadow-sm"
+                      className="w-[48%] overflow-hidden rounded-2xl border border-line/60 bg-maroon"
+                      style={{ aspectRatio: 1 }}
                     >
-                      <View className="h-24 w-full items-center justify-center overflow-hidden rounded-xl bg-cream/70 mb-2">
-                        {cover ? (
-                          <Image
-                            source={{ uri: cover }}
-                            className="h-full w-full"
-                            resizeMode="cover"
-                          />
-                        ) : (
-                          <Text className="text-4xl">
-                            {(CATEGORY_META[c.slug] || { icon: '🏺' }).icon}
-                          </Text>
-                        )}
-                      </View>
-                      <Text className="text-xs font-extrabold text-ink" numberOfLines={2}>
-                        {c.name}
-                      </Text>
-                      <Text className="text-[10px] text-muted mt-0.5">
-                        {itemsCount > 0 ? `${itemsCount} items` : 'Explore samagri'}
-                      </Text>
+                      {cover ? (
+                        <Image
+                          source={{ uri: cover }}
+                          className="absolute h-full w-full"
+                          resizeMode="cover"
+                        />
+                      ) : (
+                        <View className="absolute h-full w-full items-center justify-center bg-maroon">
+                          <Text className="text-5xl">🪔</Text>
+                        </View>
+                      )}
+                      <LinearGradient
+                        colors={['transparent', 'rgba(0,0,0,0.8)']}
+                        className="absolute bottom-0 left-0 right-0 justify-end p-3"
+                        style={{ height: '50%' }}
+                      >
+                        <Text className="text-sm font-extrabold text-white" numberOfLines={2}>
+                          {c.name}
+                        </Text>
+                        <Text className="text-[11px] font-semibold text-gold-light mt-0.5">
+                          {itemsCount > 0 ? `${itemsCount} items →` : 'Explore →'}
+                        </Text>
+                      </LinearGradient>
                     </SmoothPressable>
                   );
                 })}
