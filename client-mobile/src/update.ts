@@ -49,9 +49,54 @@ export async function fetchRemoteVersion(): Promise<RemoteVersion | null> {
 }
 
 /**
- * Downloads the APK via Android DownloadManager. When finished, Android
- * shows a notification — user taps it to install. No extra permissions
- * needed from our side.
+ * Downloads the APK into Downloads with progress callbacks.
+ * Returns the local file path, or null on failure.
+ * (DownloadManager is deliberately NOT used: its completion
+ * notification is unreliable to tap on several phones.)
+ */
+export async function downloadApk(
+  remote: RemoteVersion,
+  onProgress?: (received: number, total: number) => void,
+): Promise<string | null> {
+  try {
+    const { config } = ReactNativeBlobUtil;
+    const path = `${ReactNativeBlobUtil.fs.dirs.DownloadDir}/maa-bhagwati-v${remote.versionName}.apk`;
+    const res = await config({ fileCache: true, path })
+      .fetch('GET', remote.apkUrl)
+      .progress((received, total) => {
+        try {
+          onProgress?.(received, total);
+        } catch {
+          // ignore listener errors
+        }
+      });
+    const file = res.path();
+    const exists = await ReactNativeBlobUtil.fs.exists(file);
+    return exists ? file : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Opens the system installer for a downloaded APK.
+ * First time, Android redirects to "Allow install from this app" —
+ * user toggles once, taps back, hits Install again.
+ */
+export async function installApk(filePath: string): Promise<boolean> {
+  try {
+    await ReactNativeBlobUtil.android.actionViewIntent(
+      filePath,
+      'application/vnd.android.package-archive',
+    );
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Legacy DownloadManager path kept as a last-resort fallback.
  */
 export async function downloadUpdate(remote: RemoteVersion): Promise<'started' | 'blocked'> {
   // Android 13+ hides DownloadManager's completion notification unless we

@@ -1,7 +1,18 @@
 import React, { useState } from 'react';
 import { Modal, Text, View } from 'react-native';
 import { PrimaryButton } from './PrimaryButton';
-import { downloadUpdate, skipVersion, type RemoteVersion } from '../update';
+import {
+  downloadApk,
+  installApk,
+  skipVersion,
+  type RemoteVersion,
+} from '../update';
+
+type Phase =
+  | { kind: 'idle' }
+  | { kind: 'downloading'; pct: number }
+  | { kind: 'ready'; file: string }
+  | { kind: 'failed' };
 
 export function UpdateDialog({
   remote,
@@ -10,11 +21,27 @@ export function UpdateDialog({
   remote: RemoteVersion;
   onLater: () => void;
 }) {
-  const [started, setStarted] = useState(false);
+  const [phase, setPhase] = useState<Phase>({ kind: 'idle' });
 
   const start = async () => {
-    setStarted(true);
-    await downloadUpdate(remote);
+    setPhase({ kind: 'downloading', pct: 0 });
+    const file = await downloadApk(remote, (received, total) => {
+      const pct =
+        total > 0 ? Math.min(99, Math.round((received / total) * 100)) : 0;
+      setPhase({ kind: 'downloading', pct });
+    });
+    if (file) setPhase({ kind: 'ready', file });
+    else setPhase({ kind: 'failed' });
+  };
+
+  const install = async () => {
+    if (phase.kind !== 'ready') return;
+    const ok = await installApk(phase.file);
+    if (!ok) {
+      // Couldn't open installer (e.g. permission) — retry lands on
+      // Android's "allow from this source" screen, then Install.
+      setPhase({ kind: 'failed' });
+    }
   };
 
   const skip = async () => {
@@ -38,23 +65,47 @@ export function UpdateDialog({
               {remote.notes}
             </Text>
           ) : null}
-          {started ? (
+
+          {phase.kind === 'downloading' ? (
+            <View className="mt-4">
+              <View className="h-3 w-full overflow-hidden rounded-full bg-cream">
+                <View
+                  className="h-full rounded-full bg-leaf"
+                  style={{ width: `${phase.pct}%` }}
+                />
+              </View>
+              <Text className="mt-2 text-center text-xs font-bold text-muted">
+                Downloading… {phase.pct}%
+              </Text>
+            </View>
+          ) : null}
+
+          {phase.kind === 'ready' ? (
             <Text className="mt-3 text-center text-xs leading-5 text-leaf">
-              Downloading… when it finishes, tap the{'\n'}"Maa Bhagwati
-              update" notification to install. ✅{'\n\n'}No notification? Open
-              Files → Downloads → tap the maa-bhagwati APK file.
+              ✅ Downloaded! Tap Install below.{"\n"}First time: Android asks
+              "Allow install from this app" → allow → Install.
             </Text>
           ) : null}
+
+          {phase.kind === 'failed' ? (
+            <Text className="mt-3 text-center text-xs leading-5 text-ruby">
+              Couldn't finish that step. Tap Download to retry — or open Files
+              → Downloads and tap the maa-bhagwati APK.
+            </Text>
+          ) : null}
+
           <View className="mt-5 gap-3">
-            {!started ? (
-              <PrimaryButton title="⬇ Download update" onPress={start} />
+            {phase.kind === 'idle' || phase.kind === 'failed' ? (
+              <PrimaryButton
+                title={phase.kind === 'failed' ? '↻ Retry download' : '⬇ Download update'}
+                onPress={start}
+              />
             ) : null}
-            <PrimaryButton
-              title={started ? 'Close' : 'Later'}
-              variant="ghost"
-              onPress={onLater}
-            />
-            {!started ? (
+            {phase.kind === 'ready' ? (
+              <PrimaryButton title="📲 Install now" onPress={install} />
+            ) : null}
+            <PrimaryButton title="Later" variant="ghost" onPress={onLater} />
+            {phase.kind === 'idle' ? (
               <Text
                 className="text-center text-xs font-bold text-muted"
                 onPress={skip}
