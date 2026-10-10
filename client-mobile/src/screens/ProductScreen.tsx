@@ -7,6 +7,7 @@ import { EmptyState } from '../components/EmptyState';
 import { GradientHeader } from '../components/GradientHeader';
 import { ProductCard, QtyStepper } from '../components/ProductCard';
 import { Screen } from '../components/Screen';
+import { TabFooter } from '../components/TabFooter';
 import { Thumb } from '../components/Thumb';
 import { useShop } from '../shop';
 import { INR, colors } from '../theme';
@@ -107,6 +108,7 @@ export function ProductScreen() {
           </View>
         ) : null}
       </ScrollView>
+      <TabFooter />
     </Screen>
   );
 }

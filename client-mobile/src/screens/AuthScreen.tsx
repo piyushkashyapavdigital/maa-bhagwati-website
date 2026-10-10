@@ -8,6 +8,7 @@ import { FormField } from '../components/FormField';
 import { GradientHeader } from '../components/GradientHeader';
 import { PrimaryButton } from '../components/PrimaryButton';
 import { Screen } from '../components/Screen';
+import { TabFooter } from '../components/TabFooter';
 import type { RootStackParamList } from '../navigation/types';
 
 export function AuthScreen() {
@@ -90,6 +91,7 @@ export function AuthScreen() {
           </View>
         )}
       </ScrollView>
+      <TabFooter />
     </Screen>
   );
 }

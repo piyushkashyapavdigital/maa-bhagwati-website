@@ -1,6 +1,6 @@
 {
-  "versionCode": 4,
-  "versionName": "1.1.1",
-  "apkUrl": "https://github.com/piyushkashyapavdigital/maa-bhagwati-website/releases/download/admin-v1.1.1/app-release.apk",
-  "notes": "In-app update installer 📲 — update karo!"
+  "versionCode": 5,
+  "versionName": "1.1.2",
+  "apkUrl": "https://github.com/piyushkashyapavdigital/maa-bhagwati-website/releases/download/admin-v1.1.2/app-release.apk",
+  "notes": "Global nav + chart fix — update karo!"
 }

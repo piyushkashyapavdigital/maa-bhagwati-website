@@ -9,6 +9,7 @@ import { ErrorBanner } from '../components/ErrorBanner';
 import { GradientHeader } from '../components/GradientHeader';
 import { LoadingView } from '../components/LoadingView';
 import { Screen } from '../components/Screen';
+import { TabFooter } from '../components/TabFooter';
 import { Thumb } from '../components/Thumb';
 import { INR, colors, formatDateTime } from '../theme';
 import type { Order } from '../types';
@@ -120,6 +121,7 @@ export function OrderDetailScreen() {
           </Text>
         </View>
       </ScrollView>
+      <TabFooter />
     </Screen>
   );
 }

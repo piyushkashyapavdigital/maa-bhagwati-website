@@ -8,6 +8,7 @@ import { FormField } from '../components/FormField';
 import { GradientHeader } from '../components/GradientHeader';
 import { PrimaryButton } from '../components/PrimaryButton';
 import { Screen } from '../components/Screen';
+import { TabFooter } from '../components/TabFooter';
 import { colors } from '../theme';
 import type { RootStackParamList } from '../navigation/types';
 
@@ -80,6 +81,7 @@ export function ContactScreen() {
           <Text className="text-xs text-muted">(10 AM – 8 PM)</Text>
         </View>
       </ScrollView>
+      <TabFooter />
     </Screen>
   );
 }

@@ -96,6 +96,16 @@ export function HomeScreen() {
   // Restrict quick categories strictly to top 4 categories from app
   const top4Categories = useMemo(() => categories.slice(0, 4), [categories]);
 
+  // Real cover photo per category (first product image) — no emoji slop.
+  const catCover = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const p of products) {
+      const cid = p.category_id ?? p.categoryId;
+      if (cid && p.image && !m.has(cid)) m.set(cid, p.image);
+    }
+    return m;
+  }, [products]);
+
   // Deal of the Day — real admin-managed deals (deal % in admin product editor).
   // Hidden entirely until at least one product has a deal.
   const dealProducts = useMemo(() => {
@@ -148,7 +158,7 @@ export function HomeScreen() {
         colors={['#6B1D1D', '#4A1010', '#350B0B']}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
-        style={{ paddingTop: insets.top + 4, paddingBottom: 10, paddingHorizontal: 14 }}
+        style={{ paddingTop: insets.top + 2, paddingBottom: 8, paddingHorizontal: 14 }}
       >
         {/* Top Header Row — brand only */}
         <View className="flex-row items-center justify-between">
@@ -228,34 +238,34 @@ export function HomeScreen() {
               </View>
 
               <View className="flex-row items-start justify-between">
-                {top4Categories.map((c) => {
-                  const meta = CATEGORY_META[c.slug] || {
-                    icon: '🪔',
-                    bg: '#FAF5EF',
-                    border: '#D4AF37',
-                  };
-                  return (
-                    <SmoothPressable
-                      key={c.id}
-                      onPress={() => nav.navigate('Category', { slug: c.slug })}
-                      className="items-center"
-                      style={{ width: '23%' }}
+                {top4Categories.map((c) => (
+                  <SmoothPressable
+                    key={c.id}
+                    onPress={() => nav.navigate('Category', { slug: c.slug })}
+                    className="items-center"
+                    style={{ width: '23%' }}
+                  >
+                    <View className="mb-1.5 h-16 w-16 items-center justify-center overflow-hidden rounded-2xl border border-line bg-cream">
+                      {catCover.get(c.id) ? (
+                        <Image
+                          source={{ uri: catCover.get(c.id)! }}
+                          className="h-full w-full"
+                          resizeMode="cover"
+                        />
+                      ) : (
+                        <Text className="text-2xl">
+                          {(CATEGORY_META[c.slug] || { icon: '🪔' }).icon}
+                        </Text>
+                      )}
+                    </View>
+                    <Text
+                      className="text-[11px] font-extrabold text-center text-ink leading-tight"
+                      numberOfLines={2}
                     >
-                      <View
-                        className="h-16 w-16 items-center justify-center rounded-full border-2 shadow-sm mb-1.5"
-                        style={{ backgroundColor: meta.bg, borderColor: meta.border }}
-                      >
-                        <Text className="text-2xl">{meta.icon}</Text>
-                      </View>
-                      <Text
-                        className="text-[11px] font-extrabold text-center text-ink leading-tight"
-                        numberOfLines={2}
-                      >
-                        {c.name}
-                      </Text>
-                    </SmoothPressable>
-                  );
-                })}
+                      {c.name}
+                    </Text>
+                  </SmoothPressable>
+                ))}
               </View>
             </View>
 
@@ -367,19 +377,25 @@ export function HomeScreen() {
                   const itemsCount = products.filter(
                     (p) => (p.category_id ?? p.categoryId) === c.id
                   ).length;
-                  const meta = CATEGORY_META[c.slug] || {
-                    icon: '🪔',
-                    bg: '#FAF5EF',
-                    border: '#D4AF37',
-                  };
+                  const cover = catCover.get(c.id);
                   return (
                     <SmoothPressable
                       key={c.id}
                       onPress={() => nav.navigate('Category', { slug: c.slug })}
                       className="w-[48%] rounded-2xl border border-line/80 bg-white p-3 shadow-sm"
                     >
-                      <View className="h-24 w-full items-center justify-center rounded-xl bg-cream/70 mb-2">
-                        <Text className="text-4xl">{meta.icon}</Text>
+                      <View className="h-24 w-full items-center justify-center overflow-hidden rounded-xl bg-cream/70 mb-2">
+                        {cover ? (
+                          <Image
+                            source={{ uri: cover }}
+                            className="h-full w-full"
+                            resizeMode="cover"
+                          />
+                        ) : (
+                          <Text className="text-4xl">
+                            {(CATEGORY_META[c.slug] || { icon: '🏺' }).icon}
+                          </Text>
+                        )}
                       </View>
                       <Text className="text-xs font-extrabold text-ink" numberOfLines={2}>
                         {c.name}

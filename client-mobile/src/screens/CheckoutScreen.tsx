@@ -11,6 +11,7 @@ import { FormField } from '../components/FormField';
 import { GradientHeader } from '../components/GradientHeader';
 import { PrimaryButton } from '../components/PrimaryButton';
 import { Screen } from '../components/Screen';
+import { TabFooter } from '../components/TabFooter';
 import { INR } from '../theme';
 import type { AddressForm, CartQuote } from '../types';
 import { validateAddress } from '../types';
@@ -216,6 +217,7 @@ export function CheckoutScreen() {
           256-bit SSL protected · 7-day return · Fast delivery
         </Text>
       </ScrollView>
+      <TabFooter />
     </Screen>
   );
 }

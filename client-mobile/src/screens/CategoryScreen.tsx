@@ -8,6 +8,7 @@ import { GradientHeader } from '../components/GradientHeader';
 import { LoadingView } from '../components/LoadingView';
 import { ProductCard } from '../components/ProductCard';
 import { Screen } from '../components/Screen';
+import { TabFooter } from '../components/TabFooter';
 import { useShop } from '../shop';
 import type { RootStackParamList } from '../navigation/types';
 
@@ -79,6 +80,7 @@ export function CategoryScreen() {
           </View>
         )}
       </ScrollView>
+      <TabFooter />
     </Screen>
   );
 }

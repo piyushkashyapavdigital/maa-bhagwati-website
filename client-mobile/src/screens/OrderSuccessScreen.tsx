@@ -6,6 +6,7 @@ import { Text, View } from 'react-native';
 import { GradientHeader } from '../components/GradientHeader';
 import { PrimaryButton } from '../components/PrimaryButton';
 import { Screen } from '../components/Screen';
+import { TabFooter } from '../components/TabFooter';
 import { INR, colors } from '../theme';
 import type { RootStackParamList } from '../navigation/types';
 
@@ -53,6 +54,7 @@ export function OrderSuccessScreen() {
           />
         </View>
       </View>
+      <TabFooter />
     </Screen>
   );
 }
