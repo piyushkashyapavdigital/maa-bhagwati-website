@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, Text, View } from 'react-native';
+import { Image, KeyboardAvoidingView, Platform, ScrollView, Text, View } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../auth';
@@ -46,8 +46,12 @@ export function LoginScreen() {
           keyboardShouldPersistTaps="handled"
         >
           <View className="items-center">
-            <View className="h-24 w-24 items-center justify-center rounded-full bg-gold shadow-lg">
-              <Text className="text-5xl"></Text>
+            <View className="h-24 w-24 items-center justify-center overflow-hidden rounded-full bg-white shadow-lg">
+              <Image
+                source={require('../../assets/logo.png')}
+                style={{ width: 88, height: 88 }}
+                resizeMode="contain"
+              />
             </View>
             <Text className="mt-5 text-center text-3xl font-extrabold text-white">
               Maa Bhagwati

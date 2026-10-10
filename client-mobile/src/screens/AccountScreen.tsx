@@ -4,11 +4,12 @@ import React from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { useAuth } from '../auth';
 import { useCart } from '../cart';
-import { APP_VERSION_NAME } from '../config';
+import { APP_VERSION_CODE, APP_VERSION_NAME } from '../config';
 import { GradientHeader } from '../components/GradientHeader';
 import { Footer } from '../components/Footer';
 import { PrimaryButton } from '../components/PrimaryButton';
 import { Screen } from '../components/Screen';
+import { checkForUpdate } from '../update';
 import type { RootStackParamList } from '../navigation/types';
 
 const ROWS: { title: string; sub: string; icon: string; go: 'Contact' | 'Orders' | 'Shop' }[] = [
@@ -21,6 +22,23 @@ export function AccountScreen() {
   const nav = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { ready, user, signOut } = useAuth();
   const { clear } = useCart();
+  const [checking, setChecking] = React.useState(false);
+  const [checkMsg, setCheckMsg] = React.useState('');
+
+  const manualCheck = async () => {
+    setChecking(true);
+    setCheckMsg('');
+    const r = await checkForUpdate();
+    if (r.kind === 'update') {
+      setCheckMsg(`⬇ v${r.remote.versionName} available — open Home to update.`);
+      nav.navigate('Main', { screen: 'Home' });
+    } else if (r.kind === 'current') {
+      setCheckMsg(`✅ Up to date (shelf v${r.remote.versionCode}, app v${APP_VERSION_CODE}).`);
+    } else {
+      setCheckMsg(`⚠ ${r.message}`);
+    }
+    setChecking(false);
+  };
 
   if (!ready || !user) {
     return (
@@ -76,6 +94,22 @@ export function AccountScreen() {
             <Text className="text-xl text-gold-dark">›</Text>
           </Pressable>
         ))}
+
+        <Pressable
+          onPress={manualCheck}
+          className="mb-2 flex-row items-center rounded-2xl border border-line bg-white p-4"
+        >
+          <Text className="text-2xl">🔄</Text>
+          <View className="ml-3 flex-1">
+            <Text className="text-sm font-extrabold text-ink">
+              {checking ? 'Checking…' : 'Check for updates'}
+            </Text>
+            <Text className="text-xs text-muted">
+              {checkMsg || `App v${APP_VERSION_NAME}`}
+            </Text>
+          </View>
+          <Text className="text-xl text-gold-dark">›</Text>
+        </Pressable>
 
         <View className="mt-4">
           <PrimaryButton

@@ -1,35 +1,10 @@
 "use client";
 
 import React, { useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCart } from "@/context/CartContext";
-
-function LotusMark({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 64 64" fill="none" className={className}>
-      <path
-        d="M32 8c3 8 8 13 14 15-6 3-10 8-14 16-4-8-8-13-14-16 6-2 11-7 14-15z"
-        fill="#D4AF37"
-        stroke="#6B1D1D"
-        strokeWidth="1.5"
-      />
-      <path
-        d="M14 22c-3 7-3 14 1 20 4-5 9-9 15-11-6-2-11-5-16-9z"
-        fill="#B89327"
-        stroke="#6B1D1D"
-        strokeWidth="1.5"
-      />
-      <path
-        d="M50 22c3 7 3 14-1 20-4-5-9-9-15-11 6-2 11-5 16-9z"
-        fill="#B89327"
-        stroke="#6B1D1D"
-        strokeWidth="1.5"
-      />
-      <path d="M20 44c3 6 8 9 12 9s9-3 12-9" stroke="#6B1D1D" strokeWidth="2" strokeLinecap="round" />
-    </svg>
-  );
-}
 
 export default function Header() {
   const { cartCount, setIsCartDrawerOpen } = useCart();
@@ -50,9 +25,14 @@ export default function Header() {
       <div className="max-w-7xl mx-auto flex items-center justify-between gap-3 sm:gap-4">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2 shrink-0 group">
-          <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-white border border-[#E5C07B]/60 flex items-center justify-center p-0.5 shadow-sm group-hover:scale-105 transition-transform">
-            <LotusMark className="w-full h-full" />
-          </div>
+          <Image
+            src="/images/logo-transparent.png"
+            alt="Maa Bhagwati Pooja Bhandar"
+            width={170}
+            height={64}
+            className="h-14 sm:h-16 w-auto group-hover:scale-105 transition-transform"
+            priority
+          />
           <div className="hidden sm:block">
             <h1 className="text-lg sm:text-xl font-bold text-[#6B1D1D] leading-none tracking-tight">
               Maa Bhagwati

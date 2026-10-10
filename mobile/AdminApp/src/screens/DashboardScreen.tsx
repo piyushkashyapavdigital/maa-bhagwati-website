@@ -1,4 +1,4 @@
-import { useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useState } from 'react';
 import { RefreshControl, ScrollView, Text, View } from 'react-native';
@@ -13,7 +13,7 @@ import { StatCard } from '../components/StatCard';
 import { StatusBadge } from '../components/StatusBadge';
 import { UpdateDialog } from '../components/UpdateDialog';
 import { INR, colors, formatDate } from '../theme';
-import { fetchRemoteVersion, getSkippedCode, isUpdateAvailable, type RemoteVersion } from '../update';
+import { fetchRemoteVersion, getSkippedCode, isUpdateAvailable, checkForUpdate, ADMIN_APP_VERSION_CODE, type RemoteVersion } from '../update';
 import type { RootStackParamList } from '../navigation/types';
 import type { StatsPayload } from '../types';
 
@@ -24,6 +24,8 @@ export function DashboardScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [update, setUpdate] = useState<RemoteVersion | null>(null);
+  const [checking, setChecking] = useState(false);
+  const [checkMsg, setCheckMsg] = useState('');
 
   const load = useCallback(async () => {
     setError('');
@@ -38,12 +40,33 @@ export function DashboardScreen() {
     }
   }, []);
 
-  React.useEffect(() => {
-    load();
-    Promise.all([fetchRemoteVersion(), getSkippedCode()]).then(([r, skipped]) => {
-      if (isUpdateAvailable(r) && r!.versionCode !== skipped) setUpdate(r);
-    });
-  }, [load]);
+  useFocusEffect(
+    useCallback(() => {
+      let alive = true;
+      load();
+      Promise.all([fetchRemoteVersion(), getSkippedCode()]).then(([r, skipped]) => {
+        if (alive && isUpdateAvailable(r) && r!.versionCode !== skipped) setUpdate(r);
+      });
+      return () => {
+        alive = false;
+      };
+    }, [load]),
+  );
+
+  const manualCheck = async () => {
+    setChecking(true);
+    setCheckMsg('');
+    const r = await checkForUpdate();
+    if (r.kind === 'update') {
+      setCheckMsg(`⬇ v${r.remote.versionName} available.`);
+      setUpdate(r.remote);
+    } else if (r.kind === 'current') {
+      setCheckMsg(`✅ Up to date (shelf v${r.remote.versionCode}, app v${ADMIN_APP_VERSION_CODE}).`);
+    } else {
+      setCheckMsg(`⚠ ${r.message}`);
+    }
+    setChecking(false);
+  };
 
   const onRefresh = () => {
     setRefreshing(true);
@@ -88,6 +111,13 @@ export function DashboardScreen() {
         }
       >
         <ErrorBanner message={error} onRetry={load} />
+
+        <Text
+          className="mb-3 text-center text-[11px] font-bold text-muted"
+          onPress={manualCheck}
+        >
+          {checking ? 'Checking…' : checkMsg || '↻ Check for updates'}
+        </Text>
 
         {t ? (
           <>

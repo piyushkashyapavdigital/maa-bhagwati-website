@@ -1,6 +1,6 @@
-import { useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   FlatList,
   Image,
@@ -80,11 +80,18 @@ export function HomeScreen() {
     return () => clearInterval(interval);
   }, []);
 
-  useEffect(() => {
-    Promise.all([fetchRemoteVersion(), getSkippedCode()]).then(([r, skipped]) => {
-      if (isUpdateAvailable(r) && r!.versionCode !== skipped) setUpdate(r);
-    });
-  }, []);
+  // Re-check on every Home visit (not just first mount).
+  useFocusEffect(
+    useCallback(() => {
+      let alive = true;
+      Promise.all([fetchRemoteVersion(), getSkippedCode()]).then(([r, skipped]) => {
+        if (alive && isUpdateAvailable(r) && r!.versionCode !== skipped) setUpdate(r);
+      });
+      return () => {
+        alive = false;
+      };
+    }, []),
+  );
 
   const submitSearch = () => {
     nav.navigate('Main', {
@@ -164,8 +171,12 @@ export function HomeScreen() {
         <View className="flex-row items-center justify-between">
           {/* Left: Brand Logo & Title */}
           <View className="flex-row items-center gap-2">
-            <View className="h-8 w-8 items-center justify-center rounded-full bg-gold/20 border border-gold/40">
-              <Text className="text-lg">🪔</Text>
+            <View className="h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-white border border-gold/40">
+              <Image
+                source={require('../assets/logo.png')}
+                style={{ width: 30, height: 30 }}
+                resizeMode="contain"
+              />
             </View>
             <View>
               <Text className="text-sm font-extrabold tracking-wide text-white leading-tight">

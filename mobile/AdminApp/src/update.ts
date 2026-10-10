@@ -26,30 +26,45 @@ export function isUpdateAvailable(
 }
 
 export async function fetchRemoteVersion(): Promise<RemoteVersion | null> {
+  const r = await checkForUpdate();
+  return r.kind === 'update' || r.kind === 'current' ? r.remote : null;
+}
+
+export type UpdateCheck =
+  | { kind: 'update'; remote: RemoteVersion }
+  | { kind: 'current'; remote: RemoteVersion }
+  | { kind: 'error'; message: string };
+
+/** Verbose check for the manual "Check for updates" row. Never throws. */
+export async function checkForUpdate(
+  localCode: number = ADMIN_APP_VERSION_CODE,
+): Promise<UpdateCheck> {
+  let res: Response;
   try {
-    const ctrl = new AbortController();
-    const t = setTimeout(() => ctrl.abort(), 8000);
-    try {
-      const res = await fetch(`${ADMIN_UPDATE_VERSION_URL}?t=${Date.now()}`, {
-        signal: ctrl.signal,
-      });
-      if (!res.ok) return null;
-      const j = (await res.json()) as Partial<RemoteVersion>;
-      if (typeof j.versionCode !== 'number' || typeof j.apkUrl !== 'string') {
-        return null;
-      }
-      return {
-        versionCode: j.versionCode,
-        versionName: String(j.versionName ?? j.versionCode),
-        apkUrl: j.apkUrl,
-        notes: typeof j.notes === 'string' ? j.notes : undefined,
-      };
-    } finally {
-      clearTimeout(t);
-    }
+    res = await fetch(`${ADMIN_UPDATE_VERSION_URL}?t=${Date.now()}`);
   } catch {
-    return null; // offline or not hosted yet → stay silent
+    return { kind: 'error', message: 'No internet / server unreachable' };
   }
+  if (!res.ok) {
+    return { kind: 'error', message: `Server answered HTTP ${res.status}` };
+  }
+  let j: Partial<RemoteVersion>;
+  try {
+    j = (await res.json()) as Partial<RemoteVersion>;
+  } catch {
+    return { kind: 'error', message: 'Bad version file (not JSON)' };
+  }
+  if (typeof j.versionCode !== 'number' || typeof j.apkUrl !== 'string') {
+    return { kind: 'error', message: 'Bad version file (missing fields)' };
+  }
+  const remote: RemoteVersion = {
+    versionCode: j.versionCode,
+    versionName: String(j.versionName ?? j.versionCode),
+    apkUrl: j.apkUrl,
+    notes: typeof j.notes === 'string' ? j.notes : undefined,
+  };
+  if (remote.versionCode > localCode) return { kind: 'update', remote };
+  return { kind: 'current', remote };
 }
 
 /**

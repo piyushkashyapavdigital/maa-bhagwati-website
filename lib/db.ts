@@ -411,10 +411,43 @@ export async function getProductById(id: string) {
   return prod ? normalizeProduct(prod) : undefined;
 }
 
+function slugify(name: string): string {
+  return (name ?? "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "")
+    .slice(0, 60);
+}
+
 export async function createProduct(data: any) {
+  const row = productToRow(data);
+  if (!row.slug && row.name) row.slug = slugify(row.name) || `product-${Date.now()}`;
+  if (row.emoji === undefined) row.emoji = "🪔";
+  if (row.stock === undefined) row.stock = 100;
+  if (row.reference_quantity === undefined && row.unit) {
+    row.reference_quantity = row.unit;
+  }
+  if (!row.id) {
+    // Phone apps don't send ids — allocate prod-<max+1>.
+    const { data: ids } = await supabase.from("products").select("id");
+    let max = 0;
+    for (const r of (ids ?? []) as { id: string }[]) {
+      const m = /^prod-(\d+)$/.exec(r.id ?? "");
+      if (m) max = Math.max(max, Number(m[1]));
+    }
+    row.id = `prod-${max + 1}`;
+  }
+  // Unique slug (append -2, -3… on clash).
+  if (row.slug) {
+    const { data: slugs } = await supabase.from("products").select("slug");
+    const taken = new Set((slugs ?? []).map((r: any) => r.slug));
+    const base = row.slug;
+    let n = 2;
+    while (taken.has(row.slug)) row.slug = `${base}-${n++}`;
+  }
   const { data: result, error } = await supabase
     .from("products")
-    .insert(productToRow(data))
+    .insert(row)
     .select()
     .single();
   if (error) throw error;

@@ -12,7 +12,7 @@ type Phase =
   | { kind: 'idle' }
   | { kind: 'downloading'; pct: number }
   | { kind: 'ready'; file: string }
-  | { kind: 'failed' };
+  | { kind: 'failed'; detail: string };
 
 export function UpdateDialog({
   remote,
@@ -25,19 +25,27 @@ export function UpdateDialog({
 
   const start = async () => {
     setPhase({ kind: 'downloading', pct: 0 });
-    const file = await downloadApk(remote, (received, total) => {
-      const pct =
-        total > 0 ? Math.min(99, Math.round((received / total) * 100)) : 0;
-      setPhase({ kind: 'downloading', pct });
-    });
-    if (file) setPhase({ kind: 'ready', file });
-    else setPhase({ kind: 'failed' });
+    try {
+      const file = await downloadApk(remote, (received, total) => {
+        const pct =
+          total > 0 ? Math.min(99, Math.round((received / total) * 100)) : 0;
+        setPhase({ kind: 'downloading', pct });
+      });
+      if (file) setPhase({ kind: 'ready', file });
+      else setPhase({ kind: 'failed', detail: 'Download finished but file missing.' });
+    } catch (e) {
+      setPhase({ kind: 'failed', detail: e instanceof Error ? e.message : 'Download crashed.' });
+    }
   };
 
   const install = async () => {
     if (phase.kind !== 'ready') return;
-    const ok = await installApk(phase.file);
-    if (!ok) setPhase({ kind: 'failed' });
+    try {
+      const ok = await installApk(phase.file);
+      if (!ok) setPhase({ kind: 'failed', detail: 'Installer refused to open.' });
+    } catch (e) {
+      setPhase({ kind: 'failed', detail: e instanceof Error ? e.message : 'Install crashed.' });
+    }
   };
 
   const skip = async () => {
@@ -85,8 +93,8 @@ export function UpdateDialog({
 
           {phase.kind === 'failed' ? (
             <Text className="mt-3 text-center text-xs leading-5 text-ruby">
-              Couldn't finish that step. Tap Download to retry — or open Files
-              → Downloads and tap the bhagwati-admin APK.
+              {phase.detail} Tap Download to retry — or open Files → Downloads
+              and tap the bhagwati-admin APK.
             </Text>
           ) : null}
 
