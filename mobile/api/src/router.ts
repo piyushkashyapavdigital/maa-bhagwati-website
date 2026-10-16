@@ -29,6 +29,24 @@ const IMAGE_MIME: Record<string, string> = {
 };
 const IMAGE_EXTS = ["png", "jpg", "jpeg", "webp", "gif"];
 
+/**
+ * Keep the uploaded file's own name as its storage id (no timestamps or
+ * random suffixes). Only make it safe for a URL: drop any folder prefix,
+ * turn whitespace into "-", and replace unsafe characters.
+ */
+function safeFileName(rawName: string, ext: string): string {
+  const base = rawName
+    .replace(/^.*[\\/]/, "") // drop any folder prefix
+    .replace(/\.[^.]*$/, "") // drop the old extension
+    .trim()
+    .replace(/\s+/g, "-")
+    .replace(/[^a-zA-Z0-9._-]/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^[-_.]+|[-_.]+$/g, "")
+    .slice(0, 80);
+  return `${base || "image"}.${ext}`;
+}
+
 async function login(req: Request): Promise<Response> {
   const body = await readJson(req);
   const token = String(body["token"] ?? "");
@@ -52,14 +70,14 @@ async function upload(req: Request): Promise<Response> {
   }
   if (!ext) throw new ApiError(400, "Only PNG/JPG/WEBP/GIF images allowed");
 
-  const name = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+  const name = safeFileName(file.name, ext);
   const filePath = `uploads/${name}`;
 
   const { error } = await supabase.storage
     .from(BUCKET)
     .upload(filePath, file, {
       contentType: file.type,
-      upsert: false,
+      upsert: true,
     });
 
   if (error) throw new ApiError(500, `Supabase upload failed: ${error.message}`);
@@ -69,6 +87,7 @@ async function upload(req: Request): Promise<Response> {
   return json(
     {
       success: true,
+      name,
       path: url,
       url: url,
     },
